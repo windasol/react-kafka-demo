@@ -38,6 +38,8 @@ services:
       kafka:
         condition: service_healthy
     restart: on-failure
+    volumes:
+      - order-db:/app/data
 
   notification-service:
     build:
@@ -64,3 +66,6 @@ services:
       - order-service
       - notification-service
     restart: on-failure
+
+volumes:
+  order-db:
