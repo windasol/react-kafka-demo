@@ -1,7 +1,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci && npm rebuild esbuild
+RUN npm ci && node node_modules/esbuild/install.js
 COPY . .
 RUN VITE_ORDER_API_URL="" VITE_NOTIFICATION_API_URL="" npm run build
 
