@@ -6,7 +6,7 @@ spring:
     name: notification-service
 
   datasource:
-    url: jdbc:h2:file:/home/user/react-kafka-demo/backend/data/notificationdb
+    url: jdbc:h2:file:/home/user/react-kafka-demo/backend/data/notificationdb;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
     password:
