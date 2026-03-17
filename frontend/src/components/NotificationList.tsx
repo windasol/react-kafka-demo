@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchNotifications } from '../api/notificationApi';
-import { Notification } from '../types';
+import type { Notification } from '../types';
 import './NotificationList.css';
 
 export default function NotificationList() {

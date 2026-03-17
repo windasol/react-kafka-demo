@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Order } from '../types';
+import type { Order } from '../types';
 
 const API_BASE = import.meta.env.VITE_ORDER_API_URL || '';
 

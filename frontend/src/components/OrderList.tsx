@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchOrders } from '../api/orderApi';
-import { Order } from '../types';
+import type { Order } from '../types';
 import './OrderList.css';
 
 interface OrderListProps {
