@@ -12,9 +12,12 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final SseEmitterService sseEmitterService;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository,
+                               SseEmitterService sseEmitterService) {
         this.notificationRepository = notificationRepository;
+        this.sseEmitterService = sseEmitterService;
     }
 
     @KafkaListener(topics = "order-events", groupId = "notification-group")
@@ -27,10 +30,28 @@ public class NotificationService {
         notification.setOrderId(event.getOrderId());
         notification.setIsRead(false);
 
-        notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        sseEmitterService.broadcast(saved);
     }
 
     public List<Notification> getAllNotifications() {
         return notificationRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    public Notification markAsRead(Long id) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("알림을 찾을 수 없습니다: " + id));
+        notification.setIsRead(true);
+        return notificationRepository.save(notification);
+    }
+
+    public void markAllAsRead() {
+        List<Notification> unread = notificationRepository.findByIsReadFalse();
+        unread.forEach(n -> n.setIsRead(true));
+        notificationRepository.saveAll(unread);
+    }
+
+    public long countUnread() {
+        return notificationRepository.countByIsReadFalse();
     }
 }
