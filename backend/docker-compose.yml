@@ -31,7 +31,7 @@ services:
       dockerfile: Dockerfile
     container_name: order-service
     ports:
-      - "8087:8087"
+      - "8087:8081"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
@@ -47,7 +47,7 @@ services:
       dockerfile: Dockerfile
     container_name: notification-service
     ports:
-      - "8088:8088"
+      - "8088:8082"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
