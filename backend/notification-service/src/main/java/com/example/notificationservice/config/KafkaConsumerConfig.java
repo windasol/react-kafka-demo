@@ -32,6 +32,11 @@ public class KafkaConsumerConfig {
         config.put(JsonDeserializer.TYPE_MAPPINGS,
                 "com.example.orderservice.event.OrderCreatedEvent:com.example.notificationservice.event.OrderCreatedEvent");
         config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, OrderCreatedEvent.class.getName());
+
+        // 저지연 설정: 메시지가 1바이트라도 있으면 즉시 반환 (기본값 500ms 대기 제거)
+        config.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 10);
+        config.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1);
+
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
