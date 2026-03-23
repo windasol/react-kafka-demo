@@ -104,8 +104,64 @@ private final OrderRepository orderRepository;
 - 테스트 용이성과 명시적 의존 관계를 위해
 
 #### 방어적 프로그래밍
-- 퍼블릭 메서드 입력값 검증 (`Objects.requireNonNull`, `@Valid`)
+- 퍼블릭 메서드 입력값 검증 (`@Valid`)
 - null 반환 금지 → `Optional<T>` 또는 빈 컬렉션 반환
+
+#### Early Return (조기 반환)
+중첩 조건문 대신 조기 반환으로 가독성과 성능을 높인다.
+```java
+// 나쁜 예
+public String process(Order order) {
+    if (order != null) {
+        if (order.getStatus().equals("CREATED")) {
+            return order.getProductName();
+        }
+    }
+    return null;
+}
+
+// 좋은 예
+public Optional<String> process(Order order) {
+    if (ObjectUtils.isEmpty(order)) return Optional.empty();
+    if (!order.getStatus().equals("CREATED")) return Optional.empty();
+    return Optional.of(order.getProductName());
+}
+```
+
+#### null 검사 — Apache Commons Lang3 사용
+`null` 직접 비교 대신 Apache Commons의 유틸리티를 사용한다.
+```java
+// 나쁜 예
+if (name == null || name.isEmpty()) { ... }
+if (list == null || list.size() == 0) { ... }
+
+// 좋은 예
+if (StringUtils.isBlank(name)) { ... }        // 문자열
+if (CollectionUtils.isEmpty(list)) { ... }     // 컬렉션
+if (ObjectUtils.isEmpty(obj)) { ... }          // 객체/배열
+```
+- `StringUtils` — 문자열 null·공백·빈값 검사
+- `CollectionUtils` — 컬렉션 null·empty 검사
+- `ObjectUtils` — 일반 객체 null·empty 검사
+
+#### 성능 최적화 & 메모리 절약
+- **컬렉션 초기 용량 지정**: 크기를 알면 초기값 설정 → 불필요한 리사이징 방지
+  ```java
+  new ArrayList<>(items.size());
+  new HashMap<>(16, 0.75f);
+  ```
+- **Stream 남용 금지**: 단순 반복은 for-each가 빠름. Stream은 복잡한 파이프라인에만 사용
+- **불필요한 객체 생성 금지**: 루프 안에서 객체 생성 최소화
+  ```java
+  // 나쁜 예: 루프마다 StringBuilder 생성
+  for (Order o : orders) { String s = new StringBuilder().append(o.getId()).toString(); }
+
+  // 좋은 예: 재사용
+  StringBuilder sb = new StringBuilder();
+  for (Order o : orders) { sb.setLength(0); sb.append(o.getId()); }
+  ```
+- **`@Transactional` 범위 최소화**: DB 트랜잭션은 필요한 로직만 감싼다
+- **N+1 문제 방지**: 연관 엔티티는 `fetch join` 또는 `@BatchSize`로 처리
 
 #### 예외 처리
 - 비즈니스 예외는 커스텀 예외 클래스로 정의
