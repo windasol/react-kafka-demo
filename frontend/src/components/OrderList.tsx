@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { fetchOrders, changeOrderStatus } from '../api/orderApi';
+import { useEffect, useState, useCallback } from 'react';
+import { fetchOrdersPaged, changeOrderStatus } from '../api/orderApi';
 import type { Order, OrderStatus } from '../types';
 import { NEXT_STATUS, STATUS_LABEL } from '../types';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import OrderDetail from './OrderDetail';
 import './OrderList.css';
 
@@ -18,14 +19,39 @@ const ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
 
 export default function OrderList({ refreshTrigger }: OrderListProps) {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [loadingOrderId, setLoadingOrderId] = useState<number | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
+  const loadPage = useCallback(async (nextCursor: number | null) => {
+    setIsLoading(true);
+    try {
+      const page = await fetchOrdersPaged(nextCursor ?? undefined);
+      setOrders((prev) => nextCursor ? [...prev, ...page.content] : page.content);
+      setCursor(page.nextCursor);
+      setHasNext(page.hasNext);
+    } catch (err) {
+      console.error('주문 목록 조회 실패:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // 첫 페이지 로드 + refreshTrigger 변경 시 초기화
   useEffect(() => {
-    fetchOrders()
-      .then(setOrders)
-      .catch((err) => console.error('주문 목록 조회 실패:', err));
-  }, [refreshTrigger]);
+    setOrders([]);
+    setCursor(null);
+    setHasNext(false);
+    loadPage(null);
+  }, [refreshTrigger, loadPage]);
+
+  const handleLoadMore = useCallback(() => {
+    loadPage(cursor);
+  }, [cursor, loadPage]);
+
+  const sentinelRef = useInfiniteScroll(handleLoadMore, hasNext, isLoading);
 
   const handleStatusChange = async (orderId: number, nextStatus: OrderStatus) => {
     setLoadingOrderId(orderId);
@@ -44,14 +70,14 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
   return (
     <div className="order-list">
       <h2>주문 목록</h2>
-      {orders.length === 0 ? (
+      {orders.length === 0 && !isLoading ? (
         <p className="empty-message">아직 주문이 없습니다.</p>
       ) : (
         <ul>
           {orders.map((order) => {
             const status = order.status as OrderStatus;
             const nextStatus = NEXT_STATUS[status];
-            const isLoading = loadingOrderId === order.id;
+            const isStatusLoading = loadingOrderId === order.id;
 
             return (
               <li key={order.id} className="order-item" onClick={() => order.id && setSelectedOrderId(order.id)}>
@@ -71,9 +97,9 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
                   <button
                     className={`status-btn status-btn-${nextStatus.toLowerCase()}`}
                     onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id!, nextStatus); }}
-                    disabled={isLoading}
+                    disabled={isStatusLoading}
                   >
-                    {isLoading ? '처리중...' : ACTION_LABEL[status]}
+                    {isStatusLoading ? '처리중...' : ACTION_LABEL[status]}
                   </button>
                 )}
               </li>
@@ -81,6 +107,8 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
           })}
         </ul>
       )}
+      <div ref={sentinelRef} className="scroll-sentinel" />
+      {isLoading && <p className="loading-message">불러오는 중...</p>}
       {selectedOrderId !== null && (
         <OrderDetail
           orderId={selectedOrderId}

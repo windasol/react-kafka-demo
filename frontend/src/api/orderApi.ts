@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Order, OrderStatus } from '../types';
+import type { Order, OrderStatus, CursorPage } from '../types';
 
 const API_BASE = import.meta.env.VITE_ORDER_API_URL || '';
 
@@ -15,6 +15,13 @@ export const fetchOrders = async (): Promise<Order[]> => {
 
 export const fetchOrder = async (orderId: number): Promise<Order> => {
   const response = await axios.get<Order>(`${API_BASE}/api/orders/${orderId}`);
+  return response.data;
+};
+
+export const fetchOrdersPaged = async (cursor?: number, size = 20): Promise<CursorPage<Order>> => {
+  const params = new URLSearchParams({ paged: 'true', size: String(size) });
+  if (cursor != null) params.set('cursor', String(cursor));
+  const response = await axios.get<CursorPage<Order>>(`${API_BASE}/api/orders?${params}`);
   return response.data;
 };
 

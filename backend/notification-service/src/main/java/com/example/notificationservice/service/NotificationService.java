@@ -1,10 +1,13 @@
 package com.example.notificationservice.service;
 
+import com.example.notificationservice.dto.CursorPage;
 import com.example.notificationservice.entity.Notification;
 import com.example.notificationservice.event.OrderCreatedEvent;
 import com.example.notificationservice.event.OrderStatusChangedEvent;
 import com.example.notificationservice.exception.NotificationNotFoundException;
 import com.example.notificationservice.repository.NotificationRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -100,6 +103,20 @@ public class NotificationService {
         // 도메인 메서드로 상태 변경
         unread.forEach(Notification::markAsRead);
         notificationRepository.saveAll(unread);
+    }
+
+    /**
+     * 커서 기반 페이지네이션으로 알림 목록 조회
+     * hasNext 판단을 위해 size + 1개를 조회한다.
+     */
+    public CursorPage<Notification> getNotificationsPaged(Long cursor, int size) {
+        Pageable pageable = PageRequest.of(0, size + 1);
+
+        List<Notification> notifications = (cursor == null)
+                ? notificationRepository.findLatestNotifications(pageable)
+                : notificationRepository.findNotificationsBefore(cursor, pageable);
+
+        return CursorPage.of(notifications, size, Notification::getId);
     }
 
     /**

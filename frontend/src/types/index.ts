@@ -1,3 +1,10 @@
+/** 커서 기반 페이지 응답 */
+export interface CursorPage<T> {
+  content: T[];
+  nextCursor: number | null;
+  hasNext: boolean;
+}
+
 export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED';
 
 export interface Order {

@@ -124,3 +124,14 @@
   color: #999;
   padding: 20px;
 }
+
+.scroll-sentinel {
+  height: 1px;
+}
+
+.loading-message {
+  text-align: center;
+  color: #999;
+  padding: 12px;
+  font-size: 0.9rem;
+}

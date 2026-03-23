@@ -1,22 +1,35 @@
 import { useEffect, useState, useCallback } from 'react';
-import { fetchNotifications, markAsRead, markAllAsRead, getNotificationStreamUrl } from '../api/notificationApi';
+import { fetchNotificationsPaged, markAsRead, markAllAsRead, getNotificationStreamUrl } from '../api/notificationApi';
 import type { Notification } from '../types';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import './NotificationList.css';
 
 export default function NotificationList() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const loadNotifications = useCallback(() => {
-    fetchNotifications()
-      .then(setNotifications)
-      .catch((err) => console.error('알림 조회 실패:', err));
+  const loadPage = useCallback(async (nextCursor: number | null) => {
+    setIsLoading(true);
+    try {
+      const page = await fetchNotificationsPaged(nextCursor ?? undefined);
+      setNotifications((prev) => nextCursor ? [...prev, ...page.content] : page.content);
+      setCursor(page.nextCursor);
+      setHasNext(page.hasNext);
+    } catch (err) {
+      console.error('알림 조회 실패:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    loadNotifications();
+    loadPage(null);
 
     const eventSource = new EventSource(getNotificationStreamUrl());
 
+    // SSE로 들어오는 새 알림은 목록 상단에 추가 (커서/hasNext와 독립)
     eventSource.addEventListener('notification', (event) => {
       const newNotification: Notification = JSON.parse(event.data);
       setNotifications((prev) => [newNotification, ...prev]);
@@ -24,13 +37,18 @@ export default function NotificationList() {
 
     eventSource.onerror = () => {
       eventSource.close();
-      // SSE 연결 끊기면 폴링으로 폴백
-      const interval = setInterval(loadNotifications, 5000);
+      const interval = setInterval(() => loadPage(null), 5000);
       return () => clearInterval(interval);
     };
 
     return () => eventSource.close();
-  }, [loadNotifications]);
+  }, [loadPage]);
+
+  const handleLoadMore = useCallback(() => {
+    loadPage(cursor);
+  }, [cursor, loadPage]);
+
+  const sentinelRef = useInfiniteScroll(handleLoadMore, hasNext, isLoading);
 
   const handleMarkAsRead = async (id: number) => {
     try {
@@ -71,7 +89,7 @@ export default function NotificationList() {
           </button>
         )}
       </div>
-      {notifications.length === 0 ? (
+      {notifications.length === 0 && !isLoading ? (
         <p className="empty-message">알림이 없습니다.</p>
       ) : (
         <ul>
@@ -97,6 +115,8 @@ export default function NotificationList() {
           ))}
         </ul>
       )}
+      <div ref={sentinelRef} className="scroll-sentinel" />
+      {isLoading && <p className="loading-message">불러오는 중...</p>}
     </div>
   );
 }

@@ -127,3 +127,14 @@
   background: #f3e5f5;
   color: #6a1b9a;
 }
+
+.scroll-sentinel {
+  height: 1px;
+}
+
+.loading-message {
+  text-align: center;
+  color: #999;
+  padding: 12px;
+  font-size: 0.9rem;
+}
