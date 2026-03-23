@@ -46,6 +46,7 @@ docker-compose up --build
 ### Order Service (8080)
 - `POST /api/orders` - 주문 생성
 - `GET /api/orders` - 주문 목록 조회
+- `PATCH /api/orders/{id}/status` - 주문 상태 변경 (CREATED → CONFIRMED → SHIPPED → DELIVERED)
 
 ### Notification Service (8081)
 - `GET /api/notifications` - 알림 목록 조회

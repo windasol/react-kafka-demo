@@ -1,5 +1,6 @@
 package com.example.orderservice.entity;
 
+import com.example.orderservice.exception.InvalidOrderStatusException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import java.time.LocalDateTime;
@@ -23,8 +24,9 @@ public class Order {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private OrderStatus status;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -45,6 +47,38 @@ public class Order {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-        this.status = "CREATED";
+        this.status = OrderStatus.CREATED;
+    }
+
+    /**
+     * 주문 상태를 다음 단계로 전이하는 도메인 메서드
+     * 유효하지 않은 전이 시 InvalidOrderStatusException 발생
+     */
+    public void changeStatus(OrderStatus targetStatus) {
+        if (!this.status.canTransitionTo(targetStatus)) {
+            throw new InvalidOrderStatusException(this.status, targetStatus);
+        }
+        this.status = targetStatus;
+    }
+
+    /**
+     * 주문 확인 (CREATED → CONFIRMED)
+     */
+    public void confirm() {
+        changeStatus(OrderStatus.CONFIRMED);
+    }
+
+    /**
+     * 주문 배송 시작 (CONFIRMED → SHIPPED)
+     */
+    public void ship() {
+        changeStatus(OrderStatus.SHIPPED);
+    }
+
+    /**
+     * 주문 배송 완료 (SHIPPED → DELIVERED)
+     */
+    public void deliver() {
+        changeStatus(OrderStatus.DELIVERED);
     }
 }

@@ -1,6 +1,7 @@
 package com.example.orderservice.controller;
 
 import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.dto.OrderStatusRequest;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.service.OrderService;
 import jakarta.validation.Valid;
@@ -40,5 +41,17 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<List<Order>> getOrders() {
         return ResponseEntity.ok(orderService.getOrders());
+    }
+
+    /**
+     * 주문 상태 변경 API
+     * CREATED → CONFIRMED → SHIPPED → DELIVERED 순서로만 전이 가능
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Order> changeOrderStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderStatusRequest request) {
+        Order updated = orderService.changeOrderStatus(id, request.status());
+        return ResponseEntity.ok(updated);
     }
 }

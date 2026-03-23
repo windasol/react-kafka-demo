@@ -2,12 +2,14 @@ package com.example.notificationservice.service;
 
 import com.example.notificationservice.entity.Notification;
 import com.example.notificationservice.event.OrderCreatedEvent;
+import com.example.notificationservice.event.OrderStatusChangedEvent;
 import com.example.notificationservice.exception.NotificationNotFoundException;
 import com.example.notificationservice.repository.NotificationRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 알림 비즈니스 로직 담당 서비스
@@ -15,6 +17,14 @@ import java.util.List;
  */
 @Service
 public class NotificationService {
+
+    // 상태별 한국어 표시명
+    private static final Map<String, String> STATUS_LABELS = Map.of(
+            "CREATED", "생성",
+            "CONFIRMED", "확인",
+            "SHIPPED", "배송중",
+            "DELIVERED", "배송완료"
+    );
 
     private final NotificationRepository notificationRepository;
     private final SseEmitterService sseEmitterService;
@@ -38,6 +48,27 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notification);
 
         // 연결된 모든 SSE 클라이언트에 실시간 알림 전송
+        sseEmitterService.broadcast(saved);
+    }
+
+    /**
+     * Kafka 주문 상태 변경 이벤트 수신 후 알림 저장 및 SSE 브로드캐스트
+     */
+    @KafkaListener(
+            topics = "order-status-events",
+            groupId = "notification-group",
+            containerFactory = "statusChangedKafkaListenerContainerFactory"
+    )
+    public void handleOrderStatusChangedEvent(OrderStatusChangedEvent event) {
+        String fromLabel = STATUS_LABELS.getOrDefault(event.getPreviousStatus(), event.getPreviousStatus());
+        String toLabel = STATUS_LABELS.getOrDefault(event.getNewStatus(), event.getNewStatus());
+
+        String message = String.format("주문 상태가 변경되었습니다: %s (%s → %s)",
+                event.getProductName(), fromLabel, toLabel);
+        Notification notification = Notification.create(event.getOrderId(), message);
+
+        Notification saved = notificationRepository.save(notification);
+
         sseEmitterService.broadcast(saved);
     }
 
