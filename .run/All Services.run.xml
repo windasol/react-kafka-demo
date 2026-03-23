@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="0. All Services" type="CompoundRunConfigurationType">
+    <toRun name="1. Kafka (Docker)" type="docker-deploy" />
+    <toRun name="2. order-service" type="GradleRunConfiguration" />
+    <toRun name="3. notification-service" type="GradleRunConfiguration" />
+    <toRun name="4. frontend (Vite)" type="js.build_tools.npm" />
+  </configuration>
+</component>
