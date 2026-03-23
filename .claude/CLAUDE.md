@@ -22,3 +22,4 @@ react-kafka-demo/
 | 빌드 / 실행 / API 확인 | `.claude/docs/build.md` |
 | 코드 작성 / 리팩토링 | `.claude/docs/conventions.md` |
 | 테스트 작성 / 실행 | `.claude/docs/testing.md` |
+| 페이지네이션 / 무한스크롤 | `.claude/docs/pagination.md` |
