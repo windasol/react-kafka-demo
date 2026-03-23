@@ -1,5 +1,6 @@
 package com.example.orderservice.service;
 
+import com.example.orderservice.dto.CursorPage;
 import com.example.orderservice.dto.OrderRequest;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
@@ -7,6 +8,8 @@ import com.example.orderservice.event.OrderCreatedEvent;
 import com.example.orderservice.event.OrderStatusChangedEvent;
 import com.example.orderservice.exception.OrderNotFoundException;
 import com.example.orderservice.repository.OrderRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -93,5 +96,19 @@ public class OrderService {
      */
     public List<Order> getOrders() {
         return orderRepository.findLatestOrders();
+    }
+
+    /**
+     * 커서 기반 페이지네이션으로 주문 목록 조회
+     * hasNext 판단을 위해 size + 1개를 조회한다.
+     */
+    public CursorPage<Order> getOrdersPaged(Long cursor, int size) {
+        Pageable pageable = PageRequest.of(0, size + 1);
+
+        List<Order> orders = (cursor == null)
+                ? orderRepository.findLatestOrders(pageable)
+                : orderRepository.findOrdersBefore(cursor, pageable);
+
+        return CursorPage.of(orders, size, Order::getId);
     }
 }

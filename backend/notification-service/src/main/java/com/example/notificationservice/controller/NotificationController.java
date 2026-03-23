@@ -1,5 +1,6 @@
 package com.example.notificationservice.controller;
 
+import com.example.notificationservice.dto.CursorPage;
 import com.example.notificationservice.entity.Notification;
 import com.example.notificationservice.service.NotificationService;
 import com.example.notificationservice.service.SseEmitterService;
@@ -27,6 +28,16 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<List<Notification>> getAllNotifications() {
         return ResponseEntity.ok(notificationService.getAllNotifications());
+    }
+
+    /**
+     * 알림 목록 커서 기반 페이지네이션 API
+     */
+    @GetMapping(params = "paged")
+    public ResponseEntity<CursorPage<Notification>> getNotificationsPaged(
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(notificationService.getNotificationsPaged(cursor, size));
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

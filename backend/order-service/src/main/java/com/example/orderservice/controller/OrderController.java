@@ -1,5 +1,6 @@
 package com.example.orderservice.controller;
 
+import com.example.orderservice.dto.CursorPage;
 import com.example.orderservice.dto.OrderRequest;
 import com.example.orderservice.dto.OrderStatusRequest;
 import com.example.orderservice.entity.Order;
@@ -41,6 +42,16 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<List<Order>> getOrders() {
         return ResponseEntity.ok(orderService.getOrders());
+    }
+
+    /**
+     * 주문 목록 커서 기반 페이지네이션 API
+     */
+    @GetMapping(params = "paged")
+    public ResponseEntity<CursorPage<Order>> getOrdersPaged(
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(orderService.getOrdersPaged(cursor, size));
     }
 
     /**
