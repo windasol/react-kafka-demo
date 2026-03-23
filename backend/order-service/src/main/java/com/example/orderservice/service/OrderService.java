@@ -81,6 +81,14 @@ public class OrderService {
     }
 
     /**
+     * 주문 단건 상세 조회
+     */
+    public Order getOrder(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    }
+
+    /**
      * 최신 순으로 전체 주문 목록 조회
      */
     public List<Order> getOrders() {

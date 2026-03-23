@@ -44,6 +44,14 @@ public class OrderController {
     }
 
     /**
+     * 주문 상세 조회 API
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<Order> getOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.getOrder(id));
+    }
+
+    /**
      * 주문 상태 변경 API
      * CREATED → CONFIRMED → SHIPPED → DELIVERED 순서로만 전이 가능
      */

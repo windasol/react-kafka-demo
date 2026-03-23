@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchOrders, changeOrderStatus } from '../api/orderApi';
 import type { Order, OrderStatus } from '../types';
 import { NEXT_STATUS, STATUS_LABEL } from '../types';
+import OrderDetail from './OrderDetail';
 import './OrderList.css';
 
 interface OrderListProps {
@@ -18,6 +19,7 @@ const ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
 export default function OrderList({ refreshTrigger }: OrderListProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrderId, setLoadingOrderId] = useState<number | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchOrders()
@@ -52,7 +54,7 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
             const isLoading = loadingOrderId === order.id;
 
             return (
-              <li key={order.id} className="order-item">
+              <li key={order.id} className="order-item" onClick={() => order.id && setSelectedOrderId(order.id)}>
                 <div className="order-info">
                   <span className="product-name">{order.productName}</span>
                   <span className="quantity">x{order.quantity}</span>
@@ -68,7 +70,7 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
                 {nextStatus && (
                   <button
                     className={`status-btn status-btn-${nextStatus.toLowerCase()}`}
-                    onClick={() => handleStatusChange(order.id!, nextStatus)}
+                    onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id!, nextStatus); }}
                     disabled={isLoading}
                   >
                     {isLoading ? '처리중...' : ACTION_LABEL[status]}
@@ -78,6 +80,17 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
             );
           })}
         </ul>
+      )}
+      {selectedOrderId !== null && (
+        <OrderDetail
+          orderId={selectedOrderId}
+          onClose={() => setSelectedOrderId(null)}
+          onStatusChanged={(updated) => {
+            setOrders((prev) =>
+              prev.map((o) => (o.id === updated.id ? updated : o))
+            );
+          }}
+        />
       )}
     </div>
   );
