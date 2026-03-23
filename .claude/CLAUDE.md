@@ -15,6 +15,10 @@ react-kafka-demo/
 
 ## 참조 문서
 
-@.claude/docs/build.md
-@.claude/docs/conventions.md
-@.claude/docs/testing.md
+필요할 때만 해당 문서를 읽어서 사용한다. (토큰 절약)
+
+| 상황 | 문서 경로 |
+|------|----------|
+| 빌드 / 실행 / API 확인 | `.claude/docs/build.md` |
+| 코드 작성 / 리팩토링 | `.claude/docs/conventions.md` |
+| 테스트 작성 / 실행 | `.claude/docs/testing.md` |
