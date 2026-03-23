@@ -17,6 +17,24 @@ curl -X POST http://localhost:8080/api/orders \
 curl http://localhost:8080/api/orders
 ```
 
+### 주문 상태 변경 (CREATED → CONFIRMED → SHIPPED → DELIVERED)
+```bash
+# 주문 확인
+curl -X PATCH http://localhost:8080/api/orders/1/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "CONFIRMED"}'
+
+# 배송 시작
+curl -X PATCH http://localhost:8080/api/orders/1/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "SHIPPED"}'
+
+# 배송 완료
+curl -X PATCH http://localhost:8080/api/orders/1/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "DELIVERED"}'
+```
+
 ### 알림 목록 조회
 ```bash
 curl http://localhost:8081/api/notifications

@@ -51,6 +51,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.8rem;
+  margin-bottom: 8px;
 }
 
 .status {
@@ -61,8 +62,23 @@
 }
 
 .status-created {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-confirmed {
   background: #e8f5e9;
   color: #2e7d32;
+}
+
+.status-shipped {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-delivered {
+  background: #f3e5f5;
+  color: #6a1b9a;
 }
 
 .date {
@@ -73,4 +89,40 @@
   text-align: center;
   color: #999;
   padding: 20px;
+}
+
+/* 상태 변경 버튼 */
+.status-btn {
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.status-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.status-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.status-btn-confirmed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-btn-shipped {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-btn-delivered {
+  background: #f3e5f5;
+  color: #6a1b9a;
 }

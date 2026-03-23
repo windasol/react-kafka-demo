@@ -27,6 +27,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 유효하지 않은 주문 상태 전이 → 400 Bad Request
+     */
+    @ExceptionHandler(InvalidOrderStatusException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidOrderStatus(InvalidOrderStatusException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));
+    }
+
+    /**
      * 요청 유효성 검증 실패 → 400 Bad Request
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
