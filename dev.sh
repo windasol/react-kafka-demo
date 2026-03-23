@@ -6,7 +6,7 @@
 trap 'echo "종료 중..."; kill 0; exit' SIGINT SIGTERM
 
 echo "=== 1. Kafka 시작 (Docker) ==="
-cd backend && docker compose -f docker-compose.dev.yml up -d
+cd backend && docker compose up -d
 cd ..
 
 echo "=== Kafka 준비 대기 중... ==="
