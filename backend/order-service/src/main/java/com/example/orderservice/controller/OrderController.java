@@ -1,13 +1,19 @@
 package com.example.orderservice.controller;
 
+import com.example.orderservice.dto.OrderRequest;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 주문 API Presentation Layer
+ * Service만 호출한다. Repository를 직접 참조하지 않는다. (레이어드 아키텍처 원칙)
+ */
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -18,14 +24,21 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    /**
+     * 주문 생성 API
+     * @Valid로 요청 입력값을 검증한다. (방어적 프로그래밍)
+     */
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        Order created = orderService.createOrder(order);
+    public ResponseEntity<Order> createOrder(@Valid @RequestBody OrderRequest request) {
+        Order created = orderService.placeOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    /**
+     * 주문 목록 조회 API
+     */
     @GetMapping
-    public ResponseEntity<List<Order>> getAllOrders() {
-        return ResponseEntity.ok(orderService.getAllOrders());
+    public ResponseEntity<List<Order>> getOrders() {
+        return ResponseEntity.ok(orderService.getOrders());
     }
 }

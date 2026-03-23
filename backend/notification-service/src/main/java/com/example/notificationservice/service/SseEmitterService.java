@@ -10,15 +10,24 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * SSE(Server-Sent Events) 연결 관리 서비스
+ * 클라이언트 연결 생성/제거 및 실시간 알림 브로드캐스트를 담당한다.
+ */
 @Service
 public class SseEmitterService {
 
     private static final Logger log = LoggerFactory.getLogger(SseEmitterService.class);
 
+    // 동시성 안전한 리스트로 활성 연결 관리
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
+    /**
+     * 새 SSE 연결 생성 (타임아웃 30분)
+     * 연결 즉시 ping 이벤트를 전송해 응답 헤더를 flush한다.
+     */
     public SseEmitter createEmitter() {
-        SseEmitter emitter = new SseEmitter(1_800_000L); // 30분
+        SseEmitter emitter = new SseEmitter(1_800_000L);
 
         emitters.add(emitter);
         emitter.onCompletion(() -> emitters.remove(emitter));
@@ -28,7 +37,6 @@ public class SseEmitterService {
         });
         emitter.onError(e -> emitters.remove(emitter));
 
-        // 연결 즉시 ping 이벤트 전송 → 응답 헤더가 즉시 flush됨
         try {
             emitter.send(SseEmitter.event().name("ping").data("connected"));
         } catch (IOException e) {
@@ -38,6 +46,10 @@ public class SseEmitterService {
         return emitter;
     }
 
+    /**
+     * 연결된 모든 클라이언트에 알림 브로드캐스트
+     * 전송 실패한 emitter는 즉시 제거한다.
+     */
     public void broadcast(Notification notification) {
         for (SseEmitter emitter : emitters) {
             try {
