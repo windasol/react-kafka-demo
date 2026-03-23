@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: notification-service
+  jackson:
+    time-zone: Asia/Seoul
 
   datasource:
     url: jdbc:h2:file:./data/notificationdb

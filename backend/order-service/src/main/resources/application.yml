@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: order-service
+  jackson:
+    time-zone: Asia/Seoul
 
   datasource:
     url: jdbc:h2:file:./data/orderdb
