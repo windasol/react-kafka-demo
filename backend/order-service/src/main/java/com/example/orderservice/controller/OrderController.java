@@ -50,7 +50,7 @@ public class OrderController {
     @GetMapping(params = "paged")
     public ResponseEntity<CursorPage<Order>> getOrdersPaged(
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(orderService.getOrdersPaged(cursor, size));
     }
 

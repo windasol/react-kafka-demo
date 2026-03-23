@@ -36,7 +36,7 @@ public class NotificationController {
     @GetMapping(params = "paged")
     public ResponseEntity<CursorPage<Notification>> getNotificationsPaged(
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(notificationService.getNotificationsPaged(cursor, size));
     }
 
