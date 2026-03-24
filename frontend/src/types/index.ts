@@ -7,8 +7,17 @@ export interface CursorPage<T> {
 
 export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED';
 
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  stock: number;
+  createdAt: string;
+}
+
 export interface Order {
   id?: number;
+  productId?: number;
   productName: string;
   quantity: number;
   status?: OrderStatus;

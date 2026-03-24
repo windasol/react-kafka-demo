@@ -4,14 +4,19 @@ import com.example.orderservice.dto.CursorPage;
 import com.example.orderservice.dto.OrderRequest;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
+import com.example.orderservice.entity.Product;
 import com.example.orderservice.event.OrderCreatedEvent;
 import com.example.orderservice.event.OrderStatusChangedEvent;
+import com.example.orderservice.exception.InsufficientStockException;
 import com.example.orderservice.exception.OrderNotFoundException;
+import com.example.orderservice.exception.ProductNotFoundException;
 import com.example.orderservice.repository.OrderRepository;
+import com.example.orderservice.repository.ProductRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,22 +32,37 @@ public class OrderService {
     private static final String ORDER_STATUS_TOPIC = "order-status-events";
 
     private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public OrderService(OrderRepository orderRepository,
+                        ProductRepository productRepository,
                         KafkaTemplate<String, Object> kafkaTemplate) {
         this.orderRepository = orderRepository;
+        this.productRepository = productRepository;
         this.kafkaTemplate = kafkaTemplate;
     }
 
     /**
      * 주문 생성 후 Kafka 이벤트 발행
+     * 상품 재고를 차감한다. 재고 부족 시 InsufficientStockException 발생
      */
+    @Transactional
     public Order placeOrder(OrderRequest request) {
         Objects.requireNonNull(request, "주문 요청 정보는 필수입니다.");
 
-        // 도메인 팩토리 메서드로 생성 (외부에서 Setter 사용 금지)
-        Order order = Order.create(request.productName(), request.quantity());
+        // 상품 조회 및 재고 차감
+        Product product = productRepository.findById(request.productId())
+                .orElseThrow(() -> new ProductNotFoundException(request.productId()));
+
+        if (!product.deductStock(request.quantity())) {
+            throw new InsufficientStockException(
+                    product.getName(), request.quantity(), product.getStock());
+        }
+        productRepository.save(product);
+
+        // 주문 생성
+        Order order = Order.create(product.getId(), product.getName(), request.quantity());
         Order savedOrder = orderRepository.save(order);
 
         // 주문 생성 이벤트 발행

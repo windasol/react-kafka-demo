@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ProductList from './components/ProductList';
 import OrderForm from './components/OrderForm';
 import OrderList from './components/OrderList';
 import NotificationList from './components/NotificationList';
@@ -6,9 +7,15 @@ import './App.css';
 
 function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [productTrigger, setProductTrigger] = useState(0);
 
   const handleOrderCreated = () => {
     setRefreshTrigger((prev) => prev + 1);
+    setProductTrigger((prev) => prev + 1);
+  };
+
+  const handleProductChanged = () => {
+    setProductTrigger((prev) => prev + 1);
   };
 
   return (
@@ -19,7 +26,8 @@ function App() {
       </header>
       <main className="container">
         <section className="panel">
-          <OrderForm onOrderCreated={handleOrderCreated} />
+          <ProductList onProductChanged={handleProductChanged} />
+          <OrderForm onOrderCreated={handleOrderCreated} refreshProductTrigger={productTrigger} />
           <OrderList refreshTrigger={refreshTrigger} />
         </section>
         <section className="panel">

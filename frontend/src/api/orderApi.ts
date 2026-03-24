@@ -3,7 +3,7 @@ import type { Order, OrderStatus, CursorPage } from '../types';
 
 const API_BASE = import.meta.env.VITE_ORDER_API_URL || '';
 
-export const createOrder = async (order: Pick<Order, 'productName' | 'quantity'>): Promise<Order> => {
+export const createOrder = async (order: { productId: number; quantity: number }): Promise<Order> => {
   const response = await axios.post<Order>(`${API_BASE}/api/orders`, order);
   return response.data;
 };
