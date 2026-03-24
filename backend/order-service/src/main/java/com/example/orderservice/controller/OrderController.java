@@ -73,4 +73,14 @@ public class OrderController {
         Order updated = orderService.changeOrderStatus(id, request.status());
         return ResponseEntity.ok(updated);
     }
+
+    /**
+     * 주문 취소 API
+     * CREATED, CONFIRMED 상태에서만 취소 가능. 재고가 복원된다.
+     */
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<Order> cancelOrder(@PathVariable Long id) {
+        Order cancelled = orderService.cancelOrder(id);
+        return ResponseEntity.ok(cancelled);
+    }
 }

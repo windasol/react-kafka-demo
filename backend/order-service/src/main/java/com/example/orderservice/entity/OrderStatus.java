@@ -6,20 +6,23 @@ import java.util.Set;
 /**
  * 주문 상태 열거형
  * CREATED → CONFIRMED → SHIPPED → DELIVERED 순서로 전이된다.
+ * CREATED, CONFIRMED 상태에서 CANCELLED로 전이 가능하다.
  */
 public enum OrderStatus {
 
     CREATED,
     CONFIRMED,
     SHIPPED,
-    DELIVERED;
+    DELIVERED,
+    CANCELLED;
 
     // 각 상태에서 전이 가능한 다음 상태 목록
     private static final Map<OrderStatus, Set<OrderStatus>> VALID_TRANSITIONS = Map.of(
-            CREATED, Set.of(CONFIRMED),
-            CONFIRMED, Set.of(SHIPPED),
+            CREATED, Set.of(CONFIRMED, CANCELLED),
+            CONFIRMED, Set.of(SHIPPED, CANCELLED),
             SHIPPED, Set.of(DELIVERED),
-            DELIVERED, Set.of()
+            DELIVERED, Set.of(),
+            CANCELLED, Set.of()
     );
 
     /**
@@ -27,5 +30,12 @@ public enum OrderStatus {
      */
     public boolean canTransitionTo(OrderStatus target) {
         return VALID_TRANSITIONS.getOrDefault(this, Set.of()).contains(target);
+    }
+
+    /**
+     * 취소 가능한 상태인지 확인
+     */
+    public boolean isCancellable() {
+        return this == CREATED || this == CONFIRMED;
     }
 }

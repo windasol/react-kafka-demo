@@ -2,6 +2,7 @@ package com.example.notificationservice.service;
 
 import com.example.notificationservice.dto.CursorPage;
 import com.example.notificationservice.entity.Notification;
+import com.example.notificationservice.event.OrderCancelledEvent;
 import com.example.notificationservice.event.OrderCreatedEvent;
 import com.example.notificationservice.event.OrderStatusChangedEvent;
 import com.example.notificationservice.exception.NotificationNotFoundException;
@@ -72,6 +73,23 @@ public class NotificationService {
 
         Notification saved = notificationRepository.save(notification);
 
+        sseEmitterService.broadcast(saved);
+    }
+
+    /**
+     * Kafka 주문 취소 이벤트 수신 후 알림 저장 및 SSE 브로드캐스트
+     */
+    @KafkaListener(
+            topics = "order-cancelled-events",
+            groupId = "notification-group",
+            containerFactory = "cancelledKafkaListenerContainerFactory"
+    )
+    public void handleOrderCancelledEvent(OrderCancelledEvent event) {
+        String message = String.format("주문이 취소되었습니다: %s (수량: %d, 재고 복원됨)",
+                event.getProductName(), event.getQuantity());
+        Notification notification = Notification.create(event.getOrderId(), message);
+
+        Notification saved = notificationRepository.save(notification);
         sseEmitterService.broadcast(saved);
     }
 

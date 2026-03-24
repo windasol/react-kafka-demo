@@ -84,4 +84,11 @@ public class Order {
     public void deliver() {
         changeStatus(OrderStatus.DELIVERED);
     }
+
+    /**
+     * 주문 취소 (CREATED, CONFIRMED → CANCELLED)
+     */
+    public void cancel() {
+        changeStatus(OrderStatus.CANCELLED);
+    }
 }

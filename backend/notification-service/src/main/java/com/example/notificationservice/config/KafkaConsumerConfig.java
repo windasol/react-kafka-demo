@@ -1,5 +1,6 @@
 package com.example.notificationservice.config;
 
+import com.example.notificationservice.event.OrderCancelledEvent;
 import com.example.notificationservice.event.OrderCreatedEvent;
 import com.example.notificationservice.event.OrderStatusChangedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -73,6 +74,33 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, OrderStatusChangedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(statusChangedConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, OrderCancelledEvent> cancelledConsumerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-group");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        config.put(JsonDeserializer.TYPE_MAPPINGS,
+                "com.example.orderservice.event.OrderCancelledEvent:com.example.notificationservice.event.OrderCancelledEvent");
+        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, OrderCancelledEvent.class.getName());
+
+        config.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 10);
+        config.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1);
+
+        return new DefaultKafkaConsumerFactory<>(config);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, OrderCancelledEvent> cancelledKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, OrderCancelledEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(cancelledConsumerFactory());
         return factory;
     }
 }

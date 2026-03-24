@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { fetchOrdersPaged, changeOrderStatus } from '../api/orderApi';
+import { fetchOrdersPaged, changeOrderStatus, cancelOrder } from '../api/orderApi';
 import type { Order, OrderStatus } from '../types';
 import { NEXT_STATUS, STATUS_LABEL } from '../types';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -67,6 +67,20 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
     }
   };
 
+  const handleCancel = async (orderId: number) => {
+    setLoadingOrderId(orderId);
+    try {
+      const updated = await cancelOrder(orderId);
+      setOrders((prev) =>
+        prev.map((order) => (order.id === updated.id ? updated : order))
+      );
+    } catch (err) {
+      console.error('주문 취소 실패:', err);
+    } finally {
+      setLoadingOrderId(null);
+    }
+  };
+
   return (
     <div className="order-list">
       <h2>주문 목록</h2>
@@ -93,15 +107,26 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
                     {order.createdAt && new Date(order.createdAt).toLocaleString('ko-KR')}
                   </span>
                 </div>
-                {nextStatus && (
-                  <button
-                    className={`status-btn status-btn-${nextStatus.toLowerCase()}`}
-                    onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id!, nextStatus); }}
-                    disabled={isStatusLoading}
-                  >
-                    {isStatusLoading ? '처리중...' : ACTION_LABEL[status]}
-                  </button>
-                )}
+                <div className="order-actions">
+                  {nextStatus && (
+                    <button
+                      className={`status-btn status-btn-${nextStatus.toLowerCase()}`}
+                      onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id!, nextStatus); }}
+                      disabled={isStatusLoading}
+                    >
+                      {isStatusLoading ? '처리중...' : ACTION_LABEL[status]}
+                    </button>
+                  )}
+                  {(status === 'CREATED' || status === 'CONFIRMED') && (
+                    <button
+                      className="status-btn status-btn-cancelled"
+                      onClick={(e) => { e.stopPropagation(); handleCancel(order.id!); }}
+                      disabled={isStatusLoading}
+                    >
+                      {isStatusLoading ? '처리중...' : '주문 취소'}
+                    </button>
+                  )}
+                </div>
               </li>
             );
           })}

@@ -5,7 +5,7 @@ export interface CursorPage<T> {
   hasNext: boolean;
 }
 
-export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED';
+export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
 export interface Product {
   id: number;
@@ -38,6 +38,7 @@ export const NEXT_STATUS: Record<OrderStatus, OrderStatus | null> = {
   CONFIRMED: 'SHIPPED',
   SHIPPED: 'DELIVERED',
   DELIVERED: null,
+  CANCELLED: null,
 };
 
 /** 상태별 한국어 라벨 */
@@ -46,4 +47,5 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   CONFIRMED: '확인',
   SHIPPED: '배송중',
   DELIVERED: '배송완료',
+  CANCELLED: '취소',
 };

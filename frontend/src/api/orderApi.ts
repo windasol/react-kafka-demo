@@ -29,3 +29,8 @@ export const changeOrderStatus = async (orderId: number, status: OrderStatus): P
   const response = await axios.patch<Order>(`${API_BASE}/api/orders/${orderId}/status`, { status });
   return response.data;
 };
+
+export const cancelOrder = async (orderId: number): Promise<Order> => {
+  const response = await axios.patch<Order>(`${API_BASE}/api/orders/${orderId}/cancel`);
+  return response.data;
+};
