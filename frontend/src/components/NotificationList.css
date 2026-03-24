@@ -85,6 +85,27 @@
   transition: all 0.2s;
 }
 
+/* 타입별 좌측 보더 색상 */
+.notification-item.noti-created {
+  border-left: 3px solid #1565c0;
+}
+
+.notification-item.noti-confirmed {
+  border-left: 3px solid #2e7d32;
+}
+
+.notification-item.noti-shipped {
+  border-left: 3px solid #e65100;
+}
+
+.notification-item.noti-delivered {
+  border-left: 3px solid #6a1b9a;
+}
+
+.notification-item.noti-cancelled {
+  border-left: 3px solid #c62828;
+}
+
 .notification-item.unread {
   background: #f0f4ff;
   border-color: #c7d2fe;
