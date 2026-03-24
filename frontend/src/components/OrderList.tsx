@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
-import { fetchOrdersPaged, changeOrderStatus, cancelOrder } from '../api/orderApi';
+import { fetchOrdersPaged, changeOrderStatus, cancelOrder, searchOrders } from '../api/orderApi';
 import type { Order, OrderStatus } from '../types';
 import { NEXT_STATUS, STATUS_LABEL } from '../types';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import OrderDetail from './OrderDetail';
+import OrderFilter, { type FilterParams } from './OrderFilter';
 import './OrderList.css';
 
 interface OrderListProps {
@@ -24,11 +25,23 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingOrderId, setLoadingOrderId] = useState<number | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<FilterParams | null>(null);
 
-  const loadPage = useCallback(async (nextCursor: number | null) => {
+  const loadPage = useCallback(async (nextCursor: number | null, filterParams: FilterParams | null) => {
     setIsLoading(true);
     try {
-      const page = await fetchOrdersPaged(nextCursor ?? undefined);
+      const hasFilter = filterParams && (filterParams.keyword || filterParams.status || filterParams.dateFrom || filterParams.dateTo);
+
+      const page = hasFilter
+        ? await searchOrders({
+            cursor: nextCursor ?? undefined,
+            keyword: filterParams.keyword || undefined,
+            status: (filterParams.status as OrderStatus) || undefined,
+            dateFrom: filterParams.dateFrom || undefined,
+            dateTo: filterParams.dateTo || undefined,
+          })
+        : await fetchOrdersPaged(nextCursor ?? undefined);
+
       setOrders((prev) => nextCursor ? [...prev, ...page.content] : page.content);
       setCursor(page.nextCursor);
       setHasNext(page.hasNext);
@@ -39,17 +52,16 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
     }
   }, []);
 
-  // 첫 페이지 로드 + refreshTrigger 변경 시 초기화
   useEffect(() => {
     setOrders([]);
     setCursor(null);
     setHasNext(false);
-    loadPage(null);
-  }, [refreshTrigger, loadPage]);
+    loadPage(null, filter);
+  }, [refreshTrigger, loadPage, filter]);
 
   const handleLoadMore = useCallback(() => {
-    loadPage(cursor);
-  }, [cursor, loadPage]);
+    loadPage(cursor, filter);
+  }, [cursor, filter, loadPage]);
 
   const sentinelRef = useInfiniteScroll(handleLoadMore, hasNext, isLoading);
 
@@ -81,11 +93,20 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
     }
   };
 
+  const handleFilter = (params: FilterParams) => {
+    setFilter(params);
+  };
+
+  const handleReset = () => {
+    setFilter(null);
+  };
+
   return (
     <div className="order-list">
       <h2>주문 목록</h2>
+      <OrderFilter onFilter={handleFilter} onReset={handleReset} />
       {orders.length === 0 && !isLoading ? (
-        <p className="empty-message">아직 주문이 없습니다.</p>
+        <p className="empty-message">{filter ? '검색 결과가 없습니다.' : '아직 주문이 없습니다.'}</p>
       ) : (
         <ul>
           {orders.map((order) => {

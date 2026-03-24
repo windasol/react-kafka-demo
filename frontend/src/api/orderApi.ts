@@ -34,3 +34,24 @@ export const cancelOrder = async (orderId: number): Promise<Order> => {
   const response = await axios.patch<Order>(`${API_BASE}/api/orders/${orderId}/cancel`);
   return response.data;
 };
+
+export interface OrderSearchParams {
+  cursor?: number;
+  size?: number;
+  keyword?: string;
+  status?: OrderStatus;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export const searchOrders = async (params: OrderSearchParams): Promise<CursorPage<Order>> => {
+  const query = new URLSearchParams({ search: 'true' });
+  if (params.cursor != null) query.set('cursor', String(params.cursor));
+  if (params.size) query.set('size', String(params.size));
+  if (params.keyword) query.set('keyword', params.keyword);
+  if (params.status) query.set('status', params.status);
+  if (params.dateFrom) query.set('dateFrom', params.dateFrom);
+  if (params.dateTo) query.set('dateTo', params.dateTo);
+  const response = await axios.get<CursorPage<Order>>(`${API_BASE}/api/orders?${query}`);
+  return response.data;
+};

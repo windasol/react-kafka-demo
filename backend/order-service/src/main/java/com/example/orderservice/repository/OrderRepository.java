@@ -1,11 +1,13 @@
 package com.example.orderservice.repository;
 
 import com.example.orderservice.entity.Order;
+import com.example.orderservice.entity.OrderStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -30,4 +32,38 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     @Query("SELECT o FROM Order o WHERE o.id < :cursor ORDER BY o.id DESC")
     List<Order> findOrdersBefore(@Param("cursor") Long cursor, Pageable pageable);
+
+    /**
+     * 상품명, 상태, 날짜 범위로 필터링 (동적 조건)
+     */
+    @Query("SELECT o FROM Order o WHERE " +
+           "(:keyword IS NULL OR o.productName LIKE %:keyword%) AND " +
+           "(:status IS NULL OR o.status = :status) AND " +
+           "(:from IS NULL OR o.createdAt >= :from) AND " +
+           "(:to IS NULL OR o.createdAt <= :to) " +
+           "ORDER BY o.id DESC")
+    List<Order> findOrdersByFilter(
+            @Param("keyword") String keyword,
+            @Param("status") OrderStatus status,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            Pageable pageable);
+
+    /**
+     * 필터링 + 커서 기반 페이지네이션
+     */
+    @Query("SELECT o FROM Order o WHERE " +
+           "o.id < :cursor AND " +
+           "(:keyword IS NULL OR o.productName LIKE %:keyword%) AND " +
+           "(:status IS NULL OR o.status = :status) AND " +
+           "(:from IS NULL OR o.createdAt >= :from) AND " +
+           "(:to IS NULL OR o.createdAt <= :to) " +
+           "ORDER BY o.id DESC")
+    List<Order> findOrdersByFilterBefore(
+            @Param("cursor") Long cursor,
+            @Param("keyword") String keyword,
+            @Param("status") OrderStatus status,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            Pageable pageable);
 }

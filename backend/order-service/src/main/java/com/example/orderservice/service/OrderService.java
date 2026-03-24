@@ -19,6 +19,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -163,6 +165,24 @@ public class OrderService {
         List<Order> orders = (cursor == null)
                 ? orderRepository.findLatestOrders(pageable)
                 : orderRepository.findOrdersBefore(cursor, pageable);
+
+        return CursorPage.of(orders, size, Order::getId);
+    }
+
+    /**
+     * 검색/필터 + 커서 기반 페이지네이션으로 주문 목록 조회
+     */
+    public CursorPage<Order> searchOrders(Long cursor, int size,
+                                           String keyword, OrderStatus status,
+                                           LocalDate dateFrom, LocalDate dateTo) {
+        Pageable pageable = PageRequest.of(0, size + 1);
+        LocalDateTime from = (dateFrom != null) ? dateFrom.atStartOfDay() : null;
+        LocalDateTime to = (dateTo != null) ? dateTo.plusDays(1).atStartOfDay() : null;
+        String kw = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+
+        List<Order> orders = (cursor == null)
+                ? orderRepository.findOrdersByFilter(kw, status, from, to, pageable)
+                : orderRepository.findOrdersByFilterBefore(cursor, kw, status, from, to, pageable);
 
         return CursorPage.of(orders, size, Order::getId);
     }
