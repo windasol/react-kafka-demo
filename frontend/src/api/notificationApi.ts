@@ -24,6 +24,14 @@ export const markAllAsRead = async (): Promise<void> => {
   await axios.patch(`${API_BASE}/api/notifications/read-all`);
 };
 
+export const deleteNotification = async (id: number): Promise<void> => {
+  await axios.delete(`${API_BASE}/api/notifications/${id}`);
+};
+
+export const deleteAllNotifications = async (): Promise<void> => {
+  await axios.delete(`${API_BASE}/api/notifications`);
+};
+
 export const getNotificationStreamUrl = (): string => {
   return `${API_BASE}/api/notifications/stream`;
 };

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { fetchNotificationsPaged, markAsRead, markAllAsRead, getNotificationStreamUrl } from '../api/notificationApi';
+import { fetchNotificationsPaged, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications, getNotificationStreamUrl } from '../api/notificationApi';
 import type { Notification } from '../types';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import './NotificationList.css';
@@ -72,6 +72,27 @@ export default function NotificationList() {
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    try {
+      await deleteNotification(id);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      console.error('알림 삭제 실패:', err);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      await deleteAllNotifications();
+      setNotifications([]);
+      setCursor(null);
+      setHasNext(false);
+    } catch (err) {
+      console.error('전체 알림 삭제 실패:', err);
+    }
+  };
+
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
@@ -83,11 +104,18 @@ export default function NotificationList() {
             <span className="badge">{unreadCount}</span>
           )}
         </h2>
-        {unreadCount > 0 && (
-          <button className="mark-all-read-btn" onClick={handleMarkAllAsRead}>
-            모두 읽음
-          </button>
-        )}
+        <div className="header-actions">
+          {unreadCount > 0 && (
+            <button className="mark-all-read-btn" onClick={handleMarkAllAsRead}>
+              모두 읽음
+            </button>
+          )}
+          {notifications.length > 0 && (
+            <button className="delete-all-btn" onClick={handleDeleteAll}>
+              전체 삭제
+            </button>
+          )}
+        </div>
       </div>
       {notifications.length === 0 && !isLoading ? (
         <p className="empty-message">알림이 없습니다.</p>
@@ -111,6 +139,13 @@ export default function NotificationList() {
                   {!noti.isRead && <span className="unread-dot" />}
                 </div>
               </div>
+              <button
+                className="delete-btn"
+                onClick={(e) => handleDelete(e, noti.id)}
+                title="알림 삭제"
+              >
+                &times;
+              </button>
             </li>
           ))}
         </ul>

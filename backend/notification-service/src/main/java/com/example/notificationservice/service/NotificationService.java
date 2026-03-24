@@ -120,6 +120,24 @@ public class NotificationService {
     }
 
     /**
+     * 개별 알림 삭제
+     * 알림 미존재 시 NotificationNotFoundException 발생
+     */
+    public void deleteNotification(Long id) {
+        if (!notificationRepository.existsById(id)) {
+            throw new NotificationNotFoundException(id);
+        }
+        notificationRepository.deleteById(id);
+    }
+
+    /**
+     * 전체 알림 삭제
+     */
+    public void deleteAllNotifications() {
+        notificationRepository.deleteAll();
+    }
+
+    /**
      * 읽지 않은 알림 수 조회
      */
     public long countUnread() {

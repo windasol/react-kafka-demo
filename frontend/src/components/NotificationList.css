@@ -31,6 +31,11 @@
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .mark-all-read-btn {
   background: none;
   border: 1px solid #4361ee;
@@ -44,6 +49,22 @@
 
 .mark-all-read-btn:hover {
   background: #4361ee;
+  color: white;
+}
+
+.delete-all-btn {
+  background: none;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-all-btn:hover {
+  background: #ef4444;
   color: white;
 }
 
@@ -117,6 +138,22 @@
   background: #4361ee;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.delete-btn:hover {
+  color: #ef4444;
 }
 
 .empty-message {
