@@ -8,8 +8,8 @@ React + Spring Boot + Apache Kafka 기반 주문/알림 데모 프로젝트
 react-kafka-demo/
 ├── frontend/                  # React + Vite + TypeScript
 ├── backend/
-│   ├── order-service/         # 주문 생성 API (Spring Boot)
-│   └── notification-service/  # Kafka 소비 + SSE 알림 (Spring Boot)
+│   ├── order-service/         # 주문 생성 API (Spring Boot, 포트 8080)
+│   └── notification-service/  # Kafka 소비 + SSE 알림 (Spring Boot, 포트 8081)
 └── backend/docker-compose.yml # Kafka + Zookeeper
 ```
 
@@ -23,3 +23,8 @@ react-kafka-demo/
 | 코드 작성 / 리팩토링 | `.claude/docs/conventions.md` |
 | 테스트 작성 / 실행 | `.claude/docs/testing.md` |
 | 페이지네이션 / 무한스크롤 | `.claude/docs/pagination.md` |
+
+## 경로별 규칙 (자동 로딩)
+
+- `.claude/rules/java.md` — `backend/**` 작업 시 자동 적용
+- `.claude/rules/react.md` — `frontend/**` 작업 시 자동 적용
