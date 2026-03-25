@@ -72,6 +72,11 @@
   color: #e5484d;
 }
 
+.notification-list-scroll {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
 .notification-list ul {
   list-style: none;
   padding: 0;

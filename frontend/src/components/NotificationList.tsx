@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, type RefObject } from 'react';
 import { fetchNotificationsPaged, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications, getNotificationStreamUrl } from '../api/notificationApi';
 import type { Notification, NotificationType } from '../types';
 import { NOTIFICATION_ICON, NOTIFICATION_COLOR_CLASS } from '../types';
@@ -12,6 +12,7 @@ export default function NotificationList() {
   const [isLoading, setIsLoading] = useState(false);
   const loadingRef = useRef(false);
   const requestIdRef = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>;
 
   const loadPage = useCallback(async (nextCursor: number | null) => {
     if (loadingRef.current && nextCursor !== null) return;
@@ -64,7 +65,7 @@ export default function NotificationList() {
     loadPage(cursor);
   }, [cursor, loadPage]);
 
-  const sentinelRef = useInfiniteScroll(handleLoadMore, hasNext, isLoading);
+  const sentinelRef = useInfiniteScroll(handleLoadMore, hasNext, isLoading, scrollContainerRef);
 
   const handleMarkAsRead = async (id: number) => {
     try {
@@ -133,6 +134,7 @@ export default function NotificationList() {
           )}
         </div>
       </div>
+      <div className="notification-list-scroll" ref={scrollContainerRef}>
       {notifications.length === 0 && !isLoading ? (
         <p className="empty-message">알림이 없습니다.</p>
       ) : (
@@ -168,6 +170,7 @@ export default function NotificationList() {
       )}
       <div ref={sentinelRef} className="scroll-sentinel" />
       {isLoading && <p className="loading-message">불러오는 중...</p>}
+      </div>
     </div>
   );
 }

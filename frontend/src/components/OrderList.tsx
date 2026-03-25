@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, type RefObject } from 'react';
 import { fetchOrdersPaged, changeOrderStatus, cancelOrder, searchOrders } from '../api/orderApi';
 import type { Order, OrderStatus } from '../types';
 import { NEXT_STATUS, STATUS_LABEL } from '../types';
@@ -29,6 +29,7 @@ export default function OrderList({ refreshTrigger, onStockChanged }: OrderListP
   const [filter, setFilter] = useState<FilterParams | null>(null);
   const loadingRef = useRef(false);
   const requestIdRef = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>;
 
   const loadPage = useCallback(async (nextCursor: number | null, filterParams: FilterParams | null) => {
     if (loadingRef.current && nextCursor !== null) return;
@@ -75,7 +76,7 @@ export default function OrderList({ refreshTrigger, onStockChanged }: OrderListP
     loadPage(cursor, filter);
   }, [cursor, filter, loadPage]);
 
-  const sentinelRef = useInfiniteScroll(handleLoadMore, hasNext, isLoading);
+  const sentinelRef = useInfiniteScroll(handleLoadMore, hasNext, isLoading, scrollContainerRef);
 
   const handleStatusChange = async (orderId: number, nextStatus: OrderStatus) => {
     setLoadingOrderId(orderId);
@@ -118,6 +119,7 @@ export default function OrderList({ refreshTrigger, onStockChanged }: OrderListP
     <div className="order-list">
       <h2>주문 목록</h2>
       <OrderFilter onFilter={handleFilter} onReset={handleReset} />
+      <div className="order-list-scroll" ref={scrollContainerRef}>
       {orders.length === 0 && !isLoading ? (
         <p className="empty-message">{filter ? '검색 결과가 없습니다.' : '아직 주문이 없습니다.'}</p>
       ) : (
@@ -186,6 +188,7 @@ export default function OrderList({ refreshTrigger, onStockChanged }: OrderListP
       )}
       <div ref={sentinelRef} className="scroll-sentinel" />
       {isLoading && <p className="loading-message">불러오는 중...</p>}
+      </div>
       {selectedOrderId !== null && (
         <OrderDetail
           orderId={selectedOrderId}

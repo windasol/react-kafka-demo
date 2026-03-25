@@ -1,7 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 
 /** 스크롤이 하단에 도달하면 콜백을 실행하는 훅 */
-export function useInfiniteScroll(onLoadMore: () => void, hasNext: boolean, isLoading: boolean) {
+export function useInfiniteScroll(
+  onLoadMore: () => void,
+  hasNext: boolean,
+  isLoading: boolean,
+  rootRef?: React.RefObject<HTMLElement | null>
+) {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const onLoadMoreRef = useRef(onLoadMore);
 
@@ -24,11 +29,11 @@ export function useInfiniteScroll(onLoadMore: () => void, hasNext: boolean, isLo
           onLoadMoreRef.current();
         }
       },
-      { rootMargin: '100px', threshold: 0 }
+      { root: rootRef?.current ?? null, rootMargin: '100px', threshold: 0 }
     );
 
     observerRef.current.observe(node);
-  }, [hasNext, isLoading]);
+  }, [hasNext, isLoading, rootRef]);
 
   useEffect(() => {
     return () => observerRef.current?.disconnect();
