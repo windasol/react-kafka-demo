@@ -5,9 +5,10 @@ import './ProductList.css';
 
 interface ProductListProps {
   onProductChanged: () => void;
+  refreshTrigger: number;
 }
 
-export default function ProductList({ onProductChanged }: ProductListProps) {
+export default function ProductList({ onProductChanged, refreshTrigger }: ProductListProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -25,7 +26,7 @@ export default function ProductList({ onProductChanged }: ProductListProps) {
     }
   };
 
-  useEffect(() => { loadProducts(); }, []);
+  useEffect(() => { loadProducts(); }, [refreshTrigger]);
 
   const resetForm = () => {
     setName('');

@@ -9,6 +9,7 @@ import './OrderList.css';
 
 interface OrderListProps {
   refreshTrigger: number;
+  onStockChanged?: () => void;
 }
 
 /** 다음 상태 전이 버튼의 라벨 */
@@ -18,7 +19,7 @@ const ACTION_LABEL: Partial<Record<OrderStatus, string>> = {
   SHIPPED: '배송 완료',
 };
 
-export default function OrderList({ refreshTrigger }: OrderListProps) {
+export default function OrderList({ refreshTrigger, onStockChanged }: OrderListProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
@@ -97,6 +98,7 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
       setOrders((prev) =>
         prev.map((order) => (order.id === updated.id ? updated : order))
       );
+      onStockChanged?.();
     } catch (err) {
       console.error('주문 취소 실패:', err);
     } finally {

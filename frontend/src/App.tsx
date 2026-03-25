@@ -26,9 +26,9 @@ function App() {
       </header>
       <main className="container">
         <section className="panel">
-          <ProductList onProductChanged={handleProductChanged} />
+          <ProductList onProductChanged={handleProductChanged} refreshTrigger={productTrigger} />
           <OrderForm onOrderCreated={handleOrderCreated} refreshProductTrigger={productTrigger} />
-          <OrderList refreshTrigger={refreshTrigger} />
+          <OrderList refreshTrigger={refreshTrigger} onStockChanged={handleProductChanged} />
         </section>
         <section className="panel">
           <NotificationList />

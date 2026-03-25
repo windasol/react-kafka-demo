@@ -52,7 +52,7 @@ public class OrderController {
     @GetMapping(params = "paged")
     public ResponseEntity<CursorPage<Order>> getOrdersPaged(
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "7") int size) {
         return ResponseEntity.ok(orderService.getOrdersPaged(cursor, size));
     }
 
@@ -62,7 +62,7 @@ public class OrderController {
     @GetMapping(params = "search")
     public ResponseEntity<CursorPage<Order>> searchOrders(
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "7") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) LocalDate dateFrom,

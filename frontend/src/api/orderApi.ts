@@ -18,7 +18,7 @@ export const fetchOrder = async (orderId: number): Promise<Order> => {
   return response.data;
 };
 
-export const fetchOrdersPaged = async (cursor?: number, size = 20): Promise<CursorPage<Order>> => {
+export const fetchOrdersPaged = async (cursor?: number, size = 7): Promise<CursorPage<Order>> => {
   const params = new URLSearchParams({ paged: 'true', size: String(size) });
   if (cursor != null) params.set('cursor', String(cursor));
   const response = await axios.get<CursorPage<Order>>(`${API_BASE}/api/orders?${params}`);
