@@ -108,7 +108,7 @@ public class NotificationService {
      * 최신 순으로 전체 알림 목록 조회
      */
     public List<Notification> getAllNotifications() {
-        return notificationRepository.findLatestNotifications();
+        return notificationRepository.findAllByOrderByCreatedAtDesc();
     }
 
     /**
@@ -128,7 +128,7 @@ public class NotificationService {
      * 읽지 않은 알림 전체 읽음 처리
      */
     public void markAllAsRead() {
-        List<Notification> unread = notificationRepository.findUnreadNotifications();
+        List<Notification> unread = notificationRepository.findByIsReadFalse();
         // 도메인 메서드로 상태 변경
         unread.forEach(Notification::markAsRead);
         notificationRepository.saveAll(unread);
@@ -142,8 +142,8 @@ public class NotificationService {
         Pageable pageable = PageRequest.of(0, size + 1);
 
         List<Notification> notifications = (cursor == null)
-                ? notificationRepository.findLatestNotifications(pageable)
-                : notificationRepository.findNotificationsBefore(cursor, pageable);
+                ? notificationRepository.findAllByOrderByIdDesc(pageable)
+                : notificationRepository.findByIdLessThanOrderByIdDesc(cursor, pageable);
 
         return CursorPage.of(notifications, size, Notification::getId);
     }
@@ -170,6 +170,6 @@ public class NotificationService {
      * 읽지 않은 알림 수 조회
      */
     public long countUnread() {
-        return notificationRepository.countUnreadNotifications();
+        return notificationRepository.countByIsReadFalse();
     }
 }

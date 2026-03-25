@@ -152,7 +152,7 @@ public class OrderService {
      * 최신 순으로 전체 주문 목록 조회
      */
     public List<Order> getOrders() {
-        return orderRepository.findLatestOrders();
+        return orderRepository.findAllByOrderByCreatedAtDesc();
     }
 
     /**
@@ -163,8 +163,8 @@ public class OrderService {
         Pageable pageable = PageRequest.of(0, size + 1);
 
         List<Order> orders = (cursor == null)
-                ? orderRepository.findLatestOrders(pageable)
-                : orderRepository.findOrdersBefore(cursor, pageable);
+                ? orderRepository.findAllByOrderByIdDesc(pageable)
+                : orderRepository.findByIdLessThanOrderByIdDesc(cursor, pageable);
 
         return CursorPage.of(orders, size, Order::getId);
     }
