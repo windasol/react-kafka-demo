@@ -71,9 +71,20 @@ export default function OrderForm({ onOrderCreated, refreshProductTrigger }: Ord
           max={selectedProduct?.stock || 999}
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
+          placeholder={selectedProduct ? `최대 ${selectedProduct.stock}개` : '상품을 먼저 선택하세요'}
           required
         />
       </div>
+      {selectedProduct && (
+        <div className="order-summary">
+          <span className="summary-label">단가</span>
+          <span className="summary-value">{selectedProduct.price.toLocaleString()}원</span>
+          <span className="summary-label">총 금액</span>
+          <span className="summary-value total">
+            {(selectedProduct.price * quantity).toLocaleString()}원
+          </span>
+        </div>
+      )}
       {error && <p className="form-error">{error}</p>}
       <button type="submit" disabled={loading || !selectedProductId}>
         {loading ? '처리 중...' : '주문하기'}

@@ -34,7 +34,7 @@ public class ProductService {
      * 상품 목록 조회
      */
     public List<Product> getProducts() {
-        return productRepository.findLatestProducts();
+        return productRepository.findAllByOrderByCreatedAtDesc();
     }
 
     /**

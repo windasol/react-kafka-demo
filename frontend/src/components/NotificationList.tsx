@@ -11,21 +11,28 @@ export default function NotificationList() {
   const [hasNext, setHasNext] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const loadingRef = useRef(false);
+  const requestIdRef = useRef(0);
 
   const loadPage = useCallback(async (nextCursor: number | null) => {
-    if (loadingRef.current) return;
+    if (loadingRef.current && nextCursor !== null) return;
     loadingRef.current = true;
+    const currentRequestId = ++requestIdRef.current;
     setIsLoading(true);
     try {
       const page = await fetchNotificationsPaged(nextCursor ?? undefined);
+
+      if (currentRequestId !== requestIdRef.current) return;
+
       setNotifications((prev) => nextCursor ? [...prev, ...page.content] : page.content);
       setCursor(page.nextCursor);
       setHasNext(page.hasNext);
     } catch (err) {
       console.error('알림 조회 실패:', err);
     } finally {
-      loadingRef.current = false;
-      setIsLoading(false);
+      if (currentRequestId === requestIdRef.current) {
+        loadingRef.current = false;
+        setIsLoading(false);
+      }
     }
   }, []);
 
@@ -33,22 +40,23 @@ export default function NotificationList() {
     loadPage(null);
 
     const eventSource = new EventSource(getNotificationStreamUrl());
-    let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
     // SSE로 들어오는 새 알림은 목록 상단에 추가 (커서/hasNext와 독립)
     eventSource.addEventListener('notification', (event) => {
       const newNotification: Notification = JSON.parse(event.data);
-      setNotifications((prev) => [newNotification, ...prev]);
+      setNotifications((prev) => {
+        // 중복 방지
+        if (prev.some((n) => n.id === newNotification.id)) return prev;
+        return [newNotification, ...prev];
+      });
     });
 
     eventSource.onerror = () => {
       eventSource.close();
-      pollingInterval = setInterval(() => loadPage(null), 5000);
     };
 
     return () => {
       eventSource.close();
-      if (pollingInterval) clearInterval(pollingInterval);
     };
   }, [loadPage]);
 

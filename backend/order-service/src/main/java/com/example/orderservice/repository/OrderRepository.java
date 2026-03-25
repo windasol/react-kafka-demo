@@ -18,20 +18,17 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     /**
      * 최신 주문 순으로 전체 주문 목록 조회
      */
-    @Query("SELECT o FROM Order o ORDER BY o.createdAt DESC")
-    List<Order> findLatestOrders();
+    List<Order> findAllByOrderByCreatedAtDesc();
 
     /**
      * 최신 주문 순으로 페이지 단위 조회 (첫 페이지)
      */
-    @Query("SELECT o FROM Order o ORDER BY o.id DESC")
-    List<Order> findLatestOrders(Pageable pageable);
+    List<Order> findAllByOrderByIdDesc(Pageable pageable);
 
     /**
      * 커서 기반 페이지네이션 - 특정 커서 이전의 주문 조회
      */
-    @Query("SELECT o FROM Order o WHERE o.id < :cursor ORDER BY o.id DESC")
-    List<Order> findOrdersBefore(@Param("cursor") Long cursor, Pageable pageable);
+    List<Order> findByIdLessThanOrderByIdDesc(Long cursor, Pageable pageable);
 
     /**
      * 상품명, 상태, 날짜 범위로 필터링 (동적 조건)
