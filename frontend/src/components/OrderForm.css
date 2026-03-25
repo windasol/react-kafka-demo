@@ -46,6 +46,33 @@
   background: #fff;
 }
 
+.order-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: #f8f9fb;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.summary-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.summary-value {
+  text-align: right;
+  color: #1e1e2e;
+  font-weight: 600;
+}
+
+.summary-value.total {
+  color: #2563eb;
+  font-size: 0.95rem;
+}
+
 .form-error {
   color: #e5484d;
   font-size: 0.82rem;
