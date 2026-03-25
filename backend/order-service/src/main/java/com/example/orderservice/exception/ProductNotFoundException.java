@@ -1,0 +1,11 @@
+package com.example.orderservice.exception;
+
+/**
+ * 상품 미존재 예외
+ */
+public class ProductNotFoundException extends RuntimeException {
+
+    public ProductNotFoundException(Long id) {
+        super("상품을 찾을 수 없습니다. (id: " + id + ")");
+    }
+}

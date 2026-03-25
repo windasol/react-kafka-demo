@@ -36,6 +36,24 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 상품 미존재 예외 처리 → 404 Not Found
+     */
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleProductNotFound(ProductNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", e.getMessage()));
+    }
+
+    /**
+     * 재고 부족 예외 처리 → 409 Conflict
+     */
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Map<String, String>> handleInsufficientStock(InsufficientStockException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", e.getMessage()));
+    }
+
+    /**
      * 요청 유효성 검증 실패 → 400 Bad Request
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)

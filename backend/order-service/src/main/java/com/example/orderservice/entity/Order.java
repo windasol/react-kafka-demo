@@ -18,6 +18,8 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long productId;
+
     @Column(nullable = false)
     private String productName;
 
@@ -37,8 +39,9 @@ public class Order {
     /**
      * 주문 생성 팩토리 메서드
      */
-    public static Order create(String productName, Integer quantity) {
+    public static Order create(Long productId, String productName, Integer quantity) {
         Order order = new Order();
+        order.productId = productId;
         order.productName = productName;
         order.quantity = quantity;
         return order;
@@ -80,5 +83,12 @@ public class Order {
      */
     public void deliver() {
         changeStatus(OrderStatus.DELIVERED);
+    }
+
+    /**
+     * 주문 취소 (CREATED, CONFIRMED → CANCELLED)
+     */
+    public void cancel() {
+        changeStatus(OrderStatus.CANCELLED);
     }
 }

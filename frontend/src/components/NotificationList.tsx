@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { fetchNotificationsPaged, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications, getNotificationStreamUrl } from '../api/notificationApi';
-import type { Notification } from '../types';
+import type { Notification, NotificationType } from '../types';
+import { NOTIFICATION_ICON, NOTIFICATION_COLOR_CLASS } from '../types';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import './NotificationList.css';
 
@@ -124,11 +125,11 @@ export default function NotificationList() {
           {notifications.map((noti) => (
             <li
               key={noti.id}
-              className={`notification-item ${noti.isRead ? 'read' : 'unread'}`}
+              className={`notification-item ${noti.isRead ? 'read' : 'unread'} ${NOTIFICATION_COLOR_CLASS[noti.type as NotificationType] || ''}`}
               onClick={() => !noti.isRead && handleMarkAsRead(noti.id)}
             >
               <div className="notification-icon">
-                {noti.isRead ? '\u{1F514}' : '\u{1F515}'}
+                {NOTIFICATION_ICON[noti.type as NotificationType] || '\u{1F514}'}
               </div>
               <div className="notification-content">
                 <p className="notification-message">{noti.message}</p>

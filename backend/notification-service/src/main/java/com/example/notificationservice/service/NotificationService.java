@@ -2,6 +2,8 @@ package com.example.notificationservice.service;
 
 import com.example.notificationservice.dto.CursorPage;
 import com.example.notificationservice.entity.Notification;
+import com.example.notificationservice.entity.NotificationType;
+import com.example.notificationservice.event.OrderCancelledEvent;
 import com.example.notificationservice.event.OrderCreatedEvent;
 import com.example.notificationservice.event.OrderStatusChangedEvent;
 import com.example.notificationservice.exception.NotificationNotFoundException;
@@ -26,7 +28,16 @@ public class NotificationService {
             "CREATED", "생성",
             "CONFIRMED", "확인",
             "SHIPPED", "배송중",
-            "DELIVERED", "배송완료"
+            "DELIVERED", "배송완료",
+            "CANCELLED", "취소"
+    );
+
+    // 주문 상태 → 알림 타입 매핑
+    private static final Map<String, NotificationType> STATUS_TYPE_MAP = Map.of(
+            "CONFIRMED", NotificationType.ORDER_CONFIRMED,
+            "SHIPPED", NotificationType.ORDER_SHIPPED,
+            "DELIVERED", NotificationType.ORDER_DELIVERED,
+            "CANCELLED", NotificationType.ORDER_CANCELLED
     );
 
     private final NotificationRepository notificationRepository;
@@ -46,7 +57,7 @@ public class NotificationService {
         // 도메인 팩토리 메서드로 생성 (Setter 직접 사용 금지)
         String message = String.format("새 주문이 생성되었습니다: %s (수량: %d)",
                 event.getProductName(), event.getQuantity());
-        Notification notification = Notification.create(event.getOrderId(), message);
+        Notification notification = Notification.create(event.getOrderId(), NotificationType.ORDER_CREATED, message);
 
         Notification saved = notificationRepository.save(notification);
 
@@ -66,12 +77,30 @@ public class NotificationService {
         String fromLabel = STATUS_LABELS.getOrDefault(event.getPreviousStatus(), event.getPreviousStatus());
         String toLabel = STATUS_LABELS.getOrDefault(event.getNewStatus(), event.getNewStatus());
 
+        NotificationType type = STATUS_TYPE_MAP.getOrDefault(event.getNewStatus(), NotificationType.ORDER_CONFIRMED);
         String message = String.format("주문 상태가 변경되었습니다: %s (%s → %s)",
                 event.getProductName(), fromLabel, toLabel);
-        Notification notification = Notification.create(event.getOrderId(), message);
+        Notification notification = Notification.create(event.getOrderId(), type, message);
 
         Notification saved = notificationRepository.save(notification);
 
+        sseEmitterService.broadcast(saved);
+    }
+
+    /**
+     * Kafka 주문 취소 이벤트 수신 후 알림 저장 및 SSE 브로드캐스트
+     */
+    @KafkaListener(
+            topics = "order-cancelled-events",
+            groupId = "notification-group",
+            containerFactory = "cancelledKafkaListenerContainerFactory"
+    )
+    public void handleOrderCancelledEvent(OrderCancelledEvent event) {
+        String message = String.format("주문이 취소되었습니다: %s (수량: %d, 재고 복원됨)",
+                event.getProductName(), event.getQuantity());
+        Notification notification = Notification.create(event.getOrderId(), NotificationType.ORDER_CANCELLED, message);
+
+        Notification saved = notificationRepository.save(notification);
         sseEmitterService.broadcast(saved);
     }
 

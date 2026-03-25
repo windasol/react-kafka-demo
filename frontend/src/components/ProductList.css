@@ -1,0 +1,138 @@
+.product-list {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.product-list h2 {
+  margin: 0;
+  color: #1a1a2e;
+  font-size: 1.3rem;
+}
+
+.add-btn {
+  background: #4361ee;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.add-btn:hover {
+  opacity: 0.85;
+}
+
+.product-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.product-form input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.product-form button {
+  background: #4361ee;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.product-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.product-item {
+  padding: 12px 16px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.product-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.product-name {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.product-price {
+  color: #4361ee;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.product-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.stock {
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.out-of-stock {
+  color: #ef4444;
+}
+
+.product-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.edit-btn,
+.del-btn {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover {
+  border-color: #4361ee;
+  color: #4361ee;
+}
+
+.del-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}

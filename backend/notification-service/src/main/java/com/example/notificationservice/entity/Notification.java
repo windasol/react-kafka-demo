@@ -23,6 +23,10 @@ public class Notification {
     @Column(nullable = false)
     private Long orderId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationType type;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -35,9 +39,10 @@ public class Notification {
     /**
      * 알림 생성 팩토리 메서드
      */
-    public static Notification create(Long orderId, String message) {
+    public static Notification create(Long orderId, NotificationType type, String message) {
         Notification notification = new Notification();
         notification.orderId = orderId;
+        notification.type = type;
         notification.message = message;
         notification.isRead = false;
         return notification;
