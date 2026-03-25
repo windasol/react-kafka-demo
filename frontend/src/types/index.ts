@@ -20,6 +20,7 @@ export interface Order {
   productId?: number;
   productName: string;
   quantity: number;
+  unitPrice?: number;
   status?: OrderStatus;
   createdAt?: string;
 }

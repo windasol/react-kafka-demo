@@ -65,8 +65,8 @@ public class OrderService {
         }
         productRepository.save(product);
 
-        // 주문 생성
-        Order order = Order.create(product.getId(), product.getName(), request.quantity());
+        // 주문 생성 (주문 시점의 단가를 함께 저장)
+        Order order = Order.create(product.getId(), product.getName(), request.quantity(), product.getPrice());
         Order savedOrder = orderRepository.save(order);
 
         // 주문 생성 이벤트 발행

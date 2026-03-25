@@ -26,6 +26,8 @@ public class Order {
     @Column(nullable = false)
     private Integer quantity;
 
+    private Integer unitPrice;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
@@ -39,11 +41,12 @@ public class Order {
     /**
      * 주문 생성 팩토리 메서드
      */
-    public static Order create(Long productId, String productName, Integer quantity) {
+    public static Order create(Long productId, String productName, Integer quantity, Integer unitPrice) {
         Order order = new Order();
         order.productId = productId;
         order.productName = productName;
         order.quantity = quantity;
+        order.unitPrice = unitPrice;
         return order;
     }
 
