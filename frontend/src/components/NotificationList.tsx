@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { fetchNotificationsPaged, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications, getNotificationStreamUrl } from '../api/notificationApi';
 import type { Notification, NotificationType } from '../types';
 import { NOTIFICATION_ICON, NOTIFICATION_COLOR_CLASS } from '../types';
@@ -10,8 +10,11 @@ export default function NotificationList() {
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const loadingRef = useRef(false);
 
   const loadPage = useCallback(async (nextCursor: number | null) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setIsLoading(true);
     try {
       const page = await fetchNotificationsPaged(nextCursor ?? undefined);
@@ -21,6 +24,7 @@ export default function NotificationList() {
     } catch (err) {
       console.error('알림 조회 실패:', err);
     } finally {
+      loadingRef.current = false;
       setIsLoading(false);
     }
   }, []);
@@ -29,6 +33,7 @@ export default function NotificationList() {
     loadPage(null);
 
     const eventSource = new EventSource(getNotificationStreamUrl());
+    let pollingInterval: ReturnType<typeof setInterval> | null = null;
 
     // SSE로 들어오는 새 알림은 목록 상단에 추가 (커서/hasNext와 독립)
     eventSource.addEventListener('notification', (event) => {
@@ -38,11 +43,13 @@ export default function NotificationList() {
 
     eventSource.onerror = () => {
       eventSource.close();
-      const interval = setInterval(() => loadPage(null), 5000);
-      return () => clearInterval(interval);
+      pollingInterval = setInterval(() => loadPage(null), 5000);
     };
 
-    return () => eventSource.close();
+    return () => {
+      eventSource.close();
+      if (pollingInterval) clearInterval(pollingInterval);
+    };
   }, [loadPage]);
 
   const handleLoadMore = useCallback(() => {

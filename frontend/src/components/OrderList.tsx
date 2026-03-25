@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { fetchOrdersPaged, changeOrderStatus, cancelOrder, searchOrders } from '../api/orderApi';
 import type { Order, OrderStatus } from '../types';
 import { NEXT_STATUS, STATUS_LABEL } from '../types';
@@ -26,8 +26,13 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
   const [loadingOrderId, setLoadingOrderId] = useState<number | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [filter, setFilter] = useState<FilterParams | null>(null);
+  const loadingRef = useRef(false);
+  const requestIdRef = useRef(0);
 
   const loadPage = useCallback(async (nextCursor: number | null, filterParams: FilterParams | null) => {
+    if (loadingRef.current && nextCursor !== null) return;
+    loadingRef.current = true;
+    const currentRequestId = ++requestIdRef.current;
     setIsLoading(true);
     try {
       const hasFilter = filterParams && (filterParams.keyword || filterParams.status || filterParams.dateFrom || filterParams.dateTo);
@@ -42,13 +47,19 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
           })
         : await fetchOrdersPaged(nextCursor ?? undefined);
 
+      // 이전 요청의 응답은 무시 (stale response 방지)
+      if (currentRequestId !== requestIdRef.current) return;
+
       setOrders((prev) => nextCursor ? [...prev, ...page.content] : page.content);
       setCursor(page.nextCursor);
       setHasNext(page.hasNext);
     } catch (err) {
       console.error('주문 목록 조회 실패:', err);
     } finally {
-      setIsLoading(false);
+      if (currentRequestId === requestIdRef.current) {
+        loadingRef.current = false;
+        setIsLoading(false);
+      }
     }
   }, []);
 
