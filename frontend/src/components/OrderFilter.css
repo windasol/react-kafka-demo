@@ -1,34 +1,36 @@
 .order-filter {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .filter-toggle {
-  background: none;
-  border: 1px solid #ddd;
-  color: #666;
+  background: #f8f9fb;
+  border: 1px solid #dfe1e6;
+  color: #6b7280;
   padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  font-weight: 500;
 }
 
 .filter-toggle:hover {
-  border-color: #4361ee;
-  color: #4361ee;
+  border-color: #1e1e2e;
+  color: #1e1e2e;
 }
 
 .filter-toggle.active {
-  border-color: #4361ee;
-  color: #4361ee;
+  border-color: #1e1e2e;
+  color: #1e1e2e;
+  background: #f0f0f3;
   font-weight: 600;
 }
 
 .filter-badge {
   display: inline-block;
-  background: #ef4444;
+  background: #e5484d;
   color: white;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -43,6 +45,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 12px;
+  background: #f8f9fb;
+  border-radius: 10px;
 }
 
 .filter-row {
@@ -55,15 +60,24 @@
 .filter-row select {
   flex: 1;
   padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border: 1px solid #dfe1e6;
+  border-radius: 8px;
+  font-size: 0.82rem;
   background: white;
+  color: #1e1e2e;
+  min-width: 0;
+}
+
+.filter-row input:focus,
+.filter-row select:focus {
+  outline: none;
+  border-color: #1e1e2e;
 }
 
 .date-separator {
-  color: #999;
-  font-size: 0.9rem;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  flex-shrink: 0;
 }
 
 .filter-actions {
@@ -74,12 +88,14 @@
 .search-btn {
   flex: 1;
   padding: 8px;
-  background: #4361ee;
+  background: #1e1e2e;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition: opacity 0.15s;
 }
 
 .search-btn:hover {
@@ -88,14 +104,16 @@
 
 .reset-btn {
   padding: 8px 16px;
-  background: none;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  background: white;
+  border: 1px solid #dfe1e6;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.85rem;
-  color: #666;
+  font-size: 0.82rem;
+  color: #6b7280;
+  transition: all 0.15s;
 }
 
 .reset-btn:hover {
-  border-color: #999;
+  border-color: #9ca3af;
+  color: #1e1e2e;
 }

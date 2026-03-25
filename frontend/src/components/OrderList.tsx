@@ -124,40 +124,58 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
             const status = order.status as OrderStatus;
             const nextStatus = NEXT_STATUS[status];
             const isStatusLoading = loadingOrderId === order.id;
+            const totalPrice = order.unitPrice ? order.unitPrice * order.quantity : null;
 
             return (
               <li key={order.id} className="order-item" onClick={() => order.id && setSelectedOrderId(order.id)}>
-                <div className="order-info">
-                  <span className="product-name">{order.productName}</span>
-                  <span className="quantity">x{order.quantity}</span>
-                </div>
-                <div className="order-meta">
-                  <span className={`status status-${status.toLowerCase()}`}>
+                <div className="order-top-row">
+                  <span className="order-product-name">{order.productName}</span>
+                  <span className={`order-status order-status-${status.toLowerCase()}`}>
                     {STATUS_LABEL[status]}
                   </span>
-                  <span className="date">
+                </div>
+                <div className="order-detail-row">
+                  <span>
+                    <span className="order-detail-label">수량</span>
+                    <span className="order-detail-value">{order.quantity}개</span>
+                  </span>
+                  {order.unitPrice != null && (
+                    <span>
+                      <span className="order-detail-label">단가</span>
+                      <span className="order-detail-value">{order.unitPrice.toLocaleString()}원</span>
+                    </span>
+                  )}
+                  {totalPrice != null && (
+                    <span>
+                      <span className="order-detail-label">합계</span>
+                      <span className="order-detail-value">{totalPrice.toLocaleString()}원</span>
+                    </span>
+                  )}
+                </div>
+                <div className="order-bottom-row">
+                  <span className="order-date">
                     {order.createdAt && new Date(order.createdAt).toLocaleString('ko-KR')}
                   </span>
-                </div>
-                <div className="order-actions">
-                  {nextStatus && (
-                    <button
-                      className={`status-btn status-btn-${nextStatus.toLowerCase()}`}
-                      onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id!, nextStatus); }}
-                      disabled={isStatusLoading}
-                    >
-                      {isStatusLoading ? '처리중...' : ACTION_LABEL[status]}
-                    </button>
-                  )}
-                  {(status === 'CREATED' || status === 'CONFIRMED') && (
-                    <button
-                      className="status-btn status-btn-cancelled"
-                      onClick={(e) => { e.stopPropagation(); handleCancel(order.id!); }}
-                      disabled={isStatusLoading}
-                    >
-                      {isStatusLoading ? '처리중...' : '주문 취소'}
-                    </button>
-                  )}
+                  <div className="order-actions">
+                    {nextStatus && (
+                      <button
+                        className={`action-btn action-btn-${nextStatus.toLowerCase()}`}
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(order.id!, nextStatus); }}
+                        disabled={isStatusLoading}
+                      >
+                        {isStatusLoading ? '...' : ACTION_LABEL[status]}
+                      </button>
+                    )}
+                    {(status === 'CREATED' || status === 'CONFIRMED') && (
+                      <button
+                        className="action-btn action-btn-cancel"
+                        onClick={(e) => { e.stopPropagation(); handleCancel(order.id!); }}
+                        disabled={isStatusLoading}
+                      >
+                        {isStatusLoading ? '...' : '취소'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </li>
             );
@@ -170,11 +188,7 @@ export default function OrderList({ refreshTrigger }: OrderListProps) {
         <OrderDetail
           orderId={selectedOrderId}
           onClose={() => setSelectedOrderId(null)}
-          onStatusChanged={(updated) => {
-            setOrders((prev) =>
-              prev.map((o) => (o.id === updated.id ? updated : o))
-            );
-          }}
+          onStatusChanged={() => {}}
         />
       )}
     </div>
