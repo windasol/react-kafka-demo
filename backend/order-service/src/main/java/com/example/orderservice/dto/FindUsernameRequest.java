@@ -1,0 +1,8 @@
+package com.example.orderservice.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
+public record FindUsernameRequest(
+        @NotBlank @Email String email
+) {}

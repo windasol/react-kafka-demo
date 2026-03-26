@@ -1,8 +1,6 @@
 package com.example.orderservice.controller;
 
-import com.example.orderservice.dto.AuthResponse;
-import com.example.orderservice.dto.LoginRequest;
-import com.example.orderservice.dto.RegisterRequest;
+import com.example.orderservice.dto.*;
 import com.example.orderservice.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -29,5 +27,17 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/find-username")
+    public ResponseEntity<java.util.Map<String, String>> findUsername(@Valid @RequestBody FindUsernameRequest request) {
+        String username = authService.findUsername(request);
+        return ResponseEntity.ok(java.util.Map.of("username", username));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<java.util.Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(java.util.Map.of("message", "비밀번호가 성공적으로 변경되었습니다."));
     }
 }

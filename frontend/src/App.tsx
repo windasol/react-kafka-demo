@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
+import RegisterPage from './components/RegisterPage';
+import FindAccountPage from './components/FindAccountPage';
 import ProductList from './components/ProductList';
 import OrderForm from './components/OrderForm';
 import OrderList from './components/OrderList';
@@ -8,11 +10,13 @@ import NotificationList from './components/NotificationList';
 import './App.css';
 
 function App() {
-  const { isLoggedIn, username, logout } = useAuth();
+  const { isLoggedIn, username, logout, authPage } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [productTrigger, setProductTrigger] = useState(0);
 
   if (!isLoggedIn) {
+    if (authPage === 'register') return <RegisterPage />;
+    if (authPage === 'find-account') return <FindAccountPage />;
     return <LoginPage />;
   }
 

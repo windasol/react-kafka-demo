@@ -3,8 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import './LoginPage.css';
 
 function LoginPage() {
-  const { login, register } = useAuth();
-  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const { login, setAuthPage } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,14 +15,10 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      if (isRegisterMode) {
-        await register({ username, password });
-      } else {
-        await login({ username, password });
-      }
+      await login({ username, password });
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string } } };
-      setError(axiosError.response?.data?.error || '요청에 실패했습니다.');
+      setError(axiosError.response?.data?.error || '로그인에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -32,8 +27,8 @@ function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1 className="login-title">주문 / 알림 시스템</h1>
-        <p className="login-subtitle">React + Spring Boot + Kafka</p>
+        <h1 className="login-title">로그인</h1>
+        <p className="login-subtitle">주문 / 알림 시스템</p>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
@@ -66,16 +61,18 @@ function LoginPage() {
           {error && <p className="login-error">{error}</p>}
 
           <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? '처리중...' : isRegisterMode ? '회원가입' : '로그인'}
+            {loading ? '처리중...' : '로그인'}
           </button>
         </form>
 
-        <button
-          className="toggle-btn"
-          onClick={() => { setIsRegisterMode(!isRegisterMode); setError(''); }}
-        >
-          {isRegisterMode ? '이미 계정이 있나요? 로그인' : '계정이 없나요? 회원가입'}
-        </button>
+        <div className="auth-links">
+          <button className="link-btn" onClick={() => setAuthPage('find-account')}>
+            아이디 / 비밀번호 찾기
+          </button>
+          <button className="link-btn" onClick={() => setAuthPage('register')}>
+            회원가입
+          </button>
+        </div>
       </div>
     </div>
   );

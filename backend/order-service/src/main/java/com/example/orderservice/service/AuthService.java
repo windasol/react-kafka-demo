@@ -1,9 +1,7 @@
 package com.example.orderservice.service;
 
 import com.example.orderservice.config.JwtUtil;
-import com.example.orderservice.dto.AuthResponse;
-import com.example.orderservice.dto.LoginRequest;
-import com.example.orderservice.dto.RegisterRequest;
+import com.example.orderservice.dto.*;
 import com.example.orderservice.entity.User;
 import com.example.orderservice.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,7 +30,7 @@ public class AuthService {
         if (userRepository.existsByUsername(request.username())) {
             throw new IllegalArgumentException("이미 존재하는 사용자명입니다: " + request.username());
         }
-        User user = User.create(request.username(), passwordEncoder.encode(request.password()));
+        User user = User.create(request.username(), passwordEncoder.encode(request.password()), request.email());
         userRepository.save(user);
         String token = jwtUtil.generateToken(user.getUsername());
         return new AuthResponse(token, user.getUsername());
@@ -47,5 +45,20 @@ public class AuthService {
         }
         String token = jwtUtil.generateToken(user.getUsername());
         return new AuthResponse(token, user.getUsername());
+    }
+
+    /** 아이디 찾기 */
+    public String findUsername(FindUsernameRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 등록된 계정이 없습니다."));
+        return user.getUsername();
+    }
+
+    /** 비밀번호 재설정 */
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByUsernameAndEmail(request.username(), request.email())
+                .orElseThrow(() -> new IllegalArgumentException("사용자명과 이메일이 일치하는 계정이 없습니다."));
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
     }
 }

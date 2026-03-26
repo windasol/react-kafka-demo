@@ -23,15 +23,23 @@ public class User {
     private String password;
 
     @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     protected User() {}
 
-    public static User create(String username, String encodedPassword) {
+    public static User create(String username, String encodedPassword, String email) {
         User user = new User();
         user.username = username;
         user.password = encodedPassword;
+        user.email = email;
         user.createdAt = LocalDateTime.now();
         return user;
+    }
+
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
     }
 }
