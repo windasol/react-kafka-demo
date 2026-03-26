@@ -1,6 +1,6 @@
 package com.example.orderservice.service;
 
-import com.example.orderservice.dto.CursorPage;
+import com.example.orderservice.dto.PageResponse;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.repository.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,9 +8,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-
-import java.util.List;
+import org.springframework.data.domain.Sort;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,103 +30,100 @@ class OrderPaginationTest {
     }
 
     @Test
-    @DisplayName("첫 페이지 조회: size개 반환, hasNext=true")
+    @DisplayName("첫 페이지 조회: 7개 반환, totalPages=4")
     void firstPage() {
-        int size = 10;
-        List<Order> items = orderRepository.findAllByOrderByIdDesc(PageRequest.of(0, size + 1));
+        Page<Order> page = orderRepository.findAll(
+                PageRequest.of(0, 7, Sort.by(Sort.Direction.DESC, "id")));
+        PageResponse<Order> response = PageResponse.of(page);
 
-        CursorPage<Order> page = CursorPage.of(items, size, Order::getId);
-
-        assertThat(page.content()).hasSize(size);
-        assertThat(page.hasNext()).isTrue();
-        assertThat(page.nextCursor()).isNotNull();
+        assertThat(response.content()).hasSize(7);
+        assertThat(response.page()).isZero();
+        assertThat(response.totalElements()).isEqualTo(25);
+        assertThat(response.totalPages()).isEqualTo(4); // ceil(25/7) = 4
         // ID 내림차순 확인
-        for (int i = 0; i < page.content().size() - 1; i++) {
-            assertThat(page.content().get(i).getId())
-                    .isGreaterThan(page.content().get(i + 1).getId());
+        for (int i = 0; i < response.content().size() - 1; i++) {
+            assertThat(response.content().get(i).getId())
+                    .isGreaterThan(response.content().get(i + 1).getId());
         }
     }
 
     @Test
-    @DisplayName("두번째 페이지 조회: 커서 기반으로 이전 데이터 반환")
-    void secondPage() {
-        int size = 10;
+    @DisplayName("중간 페이지 조회: 7개 반환, 첫 페이지와 데이터 겹치지 않음")
+    void middlePage() {
+        Page<Order> firstPage = orderRepository.findAll(
+                PageRequest.of(0, 7, Sort.by(Sort.Direction.DESC, "id")));
+        Page<Order> secondPage = orderRepository.findAll(
+                PageRequest.of(1, 7, Sort.by(Sort.Direction.DESC, "id")));
 
-        // 첫 페이지
-        List<Order> firstItems = orderRepository.findAllByOrderByIdDesc(PageRequest.of(0, size + 1));
-        CursorPage<Order> firstPage = CursorPage.of(firstItems, size, Order::getId);
+        PageResponse<Order> first = PageResponse.of(firstPage);
+        PageResponse<Order> second = PageResponse.of(secondPage);
 
-        // 두번째 페이지
-        List<Order> secondItems = orderRepository.findByIdLessThanOrderByIdDesc(
-                firstPage.nextCursor(), PageRequest.of(0, size + 1));
-        CursorPage<Order> secondPage = CursorPage.of(secondItems, size, Order::getId);
-
-        assertThat(secondPage.content()).hasSize(size);
-        assertThat(secondPage.hasNext()).isTrue();
+        assertThat(second.content()).hasSize(7);
+        assertThat(second.page()).isEqualTo(1);
 
         // 두번째 페이지의 최대 ID < 첫 페이지의 최소 ID
-        Long firstPageMinId = firstPage.content().get(firstPage.content().size() - 1).getId();
-        Long secondPageMaxId = secondPage.content().get(0).getId();
-        assertThat(secondPageMaxId).isLessThan(firstPageMinId);
+        Long firstMinId = first.content().get(first.content().size() - 1).getId();
+        Long secondMaxId = second.content().get(0).getId();
+        assertThat(secondMaxId).isLessThan(firstMinId);
     }
 
     @Test
-    @DisplayName("마지막 페이지: hasNext=false, nextCursor=null")
+    @DisplayName("마지막 페이지: 나머지 4개만 반환")
     void lastPage() {
-        int size = 10;
+        Page<Order> page = orderRepository.findAll(
+                PageRequest.of(3, 7, Sort.by(Sort.Direction.DESC, "id")));
+        PageResponse<Order> response = PageResponse.of(page);
 
-        // 첫 페이지
-        List<Order> firstItems = orderRepository.findAllByOrderByIdDesc(PageRequest.of(0, size + 1));
-        CursorPage<Order> firstPage = CursorPage.of(firstItems, size, Order::getId);
-
-        // 두번째 페이지
-        List<Order> secondItems = orderRepository.findByIdLessThanOrderByIdDesc(
-                firstPage.nextCursor(), PageRequest.of(0, size + 1));
-        CursorPage<Order> secondPage = CursorPage.of(secondItems, size, Order::getId);
-
-        // 세번째 (마지막) 페이지
-        List<Order> thirdItems = orderRepository.findByIdLessThanOrderByIdDesc(
-                secondPage.nextCursor(), PageRequest.of(0, size + 1));
-        CursorPage<Order> thirdPage = CursorPage.of(thirdItems, size, Order::getId);
-
-        assertThat(thirdPage.content()).hasSize(5); // 25 - 10 - 10 = 5
-        assertThat(thirdPage.hasNext()).isFalse();
-        assertThat(thirdPage.nextCursor()).isNull();
+        assertThat(response.content()).hasSize(4); // 25 - 7*3 = 4
+        assertThat(response.page()).isEqualTo(3);
+        assertThat(response.totalPages()).isEqualTo(4);
     }
 
     @Test
     @DisplayName("전체 페이지 순회: 중복 없이 모든 데이터 조회")
     void fullTraversal() {
-        int size = 7;
         java.util.List<Long> allIds = new java.util.ArrayList<>();
-        Long cursor = null;
+        int size = 7;
 
-        while (true) {
-            List<Order> items = (cursor == null)
-                    ? orderRepository.findAllByOrderByIdDesc(PageRequest.of(0, size + 1))
-                    : orderRepository.findByIdLessThanOrderByIdDesc(cursor, PageRequest.of(0, size + 1));
+        for (int page = 0; ; page++) {
+            Page<Order> result = orderRepository.findAll(
+                    PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")));
+            PageResponse<Order> response = PageResponse.of(result);
+            response.content().forEach(o -> allIds.add(o.getId()));
 
-            CursorPage<Order> page = CursorPage.of(items, size, Order::getId);
-            page.content().forEach(o -> allIds.add(o.getId()));
-
-            if (!page.hasNext()) break;
-            cursor = page.nextCursor();
+            if (page >= response.totalPages() - 1) break;
         }
 
-        // 중복 없이 25개 모두 조회
         assertThat(allIds).hasSize(25);
         assertThat(allIds).doesNotHaveDuplicates();
     }
 
     @Test
-    @DisplayName("빈 결과: hasNext=false, content 빈 리스트")
+    @DisplayName("빈 결과: content 빈 리스트, totalPages=0")
     void emptyResult() {
         orderRepository.deleteAll();
-        List<Order> items = orderRepository.findAllByOrderByIdDesc(PageRequest.of(0, 11));
-        CursorPage<Order> page = CursorPage.of(items, 10, Order::getId);
+        Page<Order> page = orderRepository.findAll(
+                PageRequest.of(0, 7, Sort.by(Sort.Direction.DESC, "id")));
+        PageResponse<Order> response = PageResponse.of(page);
 
-        assertThat(page.content()).isEmpty();
-        assertThat(page.hasNext()).isFalse();
-        assertThat(page.nextCursor()).isNull();
+        assertThat(response.content()).isEmpty();
+        assertThat(response.totalElements()).isZero();
+        assertThat(response.totalPages()).isZero();
+    }
+
+    @Test
+    @DisplayName("필터 검색: 상품명으로 필터링 + 페이지네이션")
+    void searchByFilter() {
+        // "상품1"로 검색하면 상품1, 상품10~19 = 11개 매칭, 2페이지
+        Page<Order> page = orderRepository.searchByFilter(
+                "상품1", null, null, null,
+                PageRequest.of(0, 7, Sort.by(Sort.Direction.DESC, "id")));
+        PageResponse<Order> response = PageResponse.of(page);
+
+        assertThat(response.content()).hasSize(7);
+        assertThat(response.totalElements()).isEqualTo(11);
+        assertThat(response.totalPages()).isEqualTo(2);
+        response.content().forEach(o ->
+                assertThat(o.getProductName()).contains("상품1"));
     }
 }

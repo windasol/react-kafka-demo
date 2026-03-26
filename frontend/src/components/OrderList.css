@@ -12,9 +12,8 @@
   color: #1e1e2e;
 }
 
-.order-list-scroll {
-  max-height: 500px;
-  overflow-y: auto;
+.order-list-body {
+  min-height: 200px;
 }
 
 .order-list ul {
@@ -169,10 +168,6 @@
   color: #9ca3af;
   padding: 24px;
   font-size: 0.85rem;
-}
-
-.scroll-sentinel {
-  height: 4px;
 }
 
 .loading-message {

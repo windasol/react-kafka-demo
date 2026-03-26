@@ -2,6 +2,7 @@ package com.example.orderservice.service;
 
 import com.example.orderservice.dto.CursorPage;
 import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.dto.PageResponse;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
 import com.example.orderservice.entity.Product;
@@ -13,8 +14,10 @@ import com.example.orderservice.exception.OrderNotFoundException;
 import com.example.orderservice.exception.ProductNotFoundException;
 import com.example.orderservice.repository.OrderRepository;
 import com.example.orderservice.repository.ProductRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -156,34 +159,26 @@ public class OrderService {
     }
 
     /**
-     * 커서 기반 페이지네이션으로 주문 목록 조회
-     * hasNext 판단을 위해 size + 1개를 조회한다.
+     * 오프셋 기반 페이지네이션으로 주문 목록 조회
      */
-    public CursorPage<Order> getOrdersPaged(Long cursor, int size) {
-        Pageable pageable = PageRequest.of(0, size + 1);
-
-        List<Order> orders = (cursor == null)
-                ? orderRepository.findAllByOrderByIdDesc(pageable)
-                : orderRepository.findByIdLessThanOrderByIdDesc(cursor, pageable);
-
-        return CursorPage.of(orders, size, Order::getId);
+    public PageResponse<Order> getOrdersPaged(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        Page<Order> result = orderRepository.findAll(pageable);
+        return PageResponse.of(result);
     }
 
     /**
-     * 검색/필터 + 커서 기반 페이지네이션으로 주문 목록 조회
+     * 검색/필터 + 오프셋 기반 페이지네이션으로 주문 목록 조회
      */
-    public CursorPage<Order> searchOrders(Long cursor, int size,
-                                           String keyword, OrderStatus status,
-                                           LocalDate dateFrom, LocalDate dateTo) {
-        Pageable pageable = PageRequest.of(0, size + 1);
+    public PageResponse<Order> searchOrders(int page, int size,
+                                             String keyword, OrderStatus status,
+                                             LocalDate dateFrom, LocalDate dateTo) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         LocalDateTime from = (dateFrom != null) ? dateFrom.atStartOfDay() : null;
         LocalDateTime to = (dateTo != null) ? dateTo.plusDays(1).atStartOfDay() : null;
         String kw = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
 
-        List<Order> orders = (cursor == null)
-                ? orderRepository.findOrdersByFilter(kw, status, from, to, pageable)
-                : orderRepository.findOrdersByFilterBefore(cursor, kw, status, from, to, pageable);
-
-        return CursorPage.of(orders, size, Order::getId);
+        Page<Order> result = orderRepository.searchByFilter(kw, status, from, to, pageable);
+        return PageResponse.of(result);
     }
 }

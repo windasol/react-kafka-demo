@@ -2,6 +2,7 @@ package com.example.orderservice.repository;
 
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -58,6 +59,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
            "ORDER BY o.id DESC")
     List<Order> findOrdersByFilterBefore(
             @Param("cursor") Long cursor,
+            @Param("keyword") String keyword,
+            @Param("status") OrderStatus status,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            Pageable pageable);
+
+    /**
+     * 오프셋 기반 필터 검색 (Page 반환)
+     */
+    @Query("SELECT o FROM Order o WHERE " +
+           "(:keyword IS NULL OR o.productName LIKE %:keyword%) AND " +
+           "(:status IS NULL OR o.status = :status) AND " +
+           "(:from IS NULL OR o.createdAt >= :from) AND " +
+           "(:to IS NULL OR o.createdAt <= :to)")
+    Page<Order> searchByFilter(
             @Param("keyword") String keyword,
             @Param("status") OrderStatus status,
             @Param("from") LocalDateTime from,

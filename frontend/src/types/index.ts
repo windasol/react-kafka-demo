@@ -5,6 +5,15 @@ export interface CursorPage<T> {
   hasNext: boolean;
 }
 
+/** 오프셋 기반 페이지 응답 */
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export type OrderStatus = 'CREATED' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
 export interface Product {

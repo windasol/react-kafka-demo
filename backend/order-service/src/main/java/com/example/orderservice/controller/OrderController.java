@@ -1,7 +1,7 @@
 package com.example.orderservice.controller;
 
-import com.example.orderservice.dto.CursorPage;
 import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.dto.PageResponse;
 import com.example.orderservice.dto.OrderStatusRequest;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
@@ -47,28 +47,28 @@ public class OrderController {
     }
 
     /**
-     * 주문 목록 커서 기반 페이지네이션 API
+     * 주문 목록 오프셋 기반 페이지네이션 API
      */
     @GetMapping(params = "paged")
-    public ResponseEntity<CursorPage<Order>> getOrdersPaged(
-            @RequestParam(required = false) Long cursor,
+    public ResponseEntity<PageResponse<Order>> getOrdersPaged(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "7") int size) {
-        return ResponseEntity.ok(orderService.getOrdersPaged(cursor, size));
+        return ResponseEntity.ok(orderService.getOrdersPaged(page, size));
     }
 
     /**
      * 주문 검색/필터 API (상품명, 상태, 날짜 범위)
      */
     @GetMapping(params = "search")
-    public ResponseEntity<CursorPage<Order>> searchOrders(
-            @RequestParam(required = false) Long cursor,
+    public ResponseEntity<PageResponse<Order>> searchOrders(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "7") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) LocalDate dateFrom,
             @RequestParam(required = false) LocalDate dateTo) {
         return ResponseEntity.ok(
-                orderService.searchOrders(cursor, size, keyword, status, dateFrom, dateTo));
+                orderService.searchOrders(page, size, keyword, status, dateFrom, dateTo));
     }
 
     /**

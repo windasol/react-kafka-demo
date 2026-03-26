@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Order, OrderStatus, CursorPage } from '../types';
+import type { Order, OrderStatus, PageResponse } from '../types';
 
 const API_BASE = import.meta.env.VITE_ORDER_API_URL || '';
 
@@ -18,10 +18,9 @@ export const fetchOrder = async (orderId: number): Promise<Order> => {
   return response.data;
 };
 
-export const fetchOrdersPaged = async (cursor?: number, size = 7): Promise<CursorPage<Order>> => {
-  const params = new URLSearchParams({ paged: 'true', size: String(size) });
-  if (cursor != null) params.set('cursor', String(cursor));
-  const response = await axios.get<CursorPage<Order>>(`${API_BASE}/api/orders?${params}`);
+export const fetchOrdersPaged = async (page = 0, size = 7): Promise<PageResponse<Order>> => {
+  const params = new URLSearchParams({ paged: 'true', page: String(page), size: String(size) });
+  const response = await axios.get<PageResponse<Order>>(`${API_BASE}/api/orders?${params}`);
   return response.data;
 };
 
@@ -36,7 +35,7 @@ export const cancelOrder = async (orderId: number): Promise<Order> => {
 };
 
 export interface OrderSearchParams {
-  cursor?: number;
+  page?: number;
   size?: number;
   keyword?: string;
   status?: OrderStatus;
@@ -44,14 +43,14 @@ export interface OrderSearchParams {
   dateTo?: string;
 }
 
-export const searchOrders = async (params: OrderSearchParams): Promise<CursorPage<Order>> => {
+export const searchOrders = async (params: OrderSearchParams): Promise<PageResponse<Order>> => {
   const query = new URLSearchParams({ search: 'true' });
-  if (params.cursor != null) query.set('cursor', String(params.cursor));
+  if (params.page != null) query.set('page', String(params.page));
   if (params.size) query.set('size', String(params.size));
   if (params.keyword) query.set('keyword', params.keyword);
   if (params.status) query.set('status', params.status);
   if (params.dateFrom) query.set('dateFrom', params.dateFrom);
   if (params.dateTo) query.set('dateTo', params.dateTo);
-  const response = await axios.get<CursorPage<Order>>(`${API_BASE}/api/orders?${query}`);
+  const response = await axios.get<PageResponse<Order>>(`${API_BASE}/api/orders?${query}`);
   return response.data;
 };
