@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
@@ -10,9 +10,18 @@ import NotificationList from './components/NotificationList';
 import './App.css';
 
 function App() {
-  const { isLoggedIn, username, logout, authPage } = useAuth();
+  const { isLoggedIn, username, logout, authPage, kakaoLogin } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [productTrigger, setProductTrigger] = useState(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code && !isLoggedIn) {
+      window.history.replaceState({}, '', window.location.pathname);
+      kakaoLogin(code).catch(() => {});
+    }
+  }, [kakaoLogin, isLoggedIn]);
 
   if (!isLoggedIn) {
     if (authPage === 'register') return <RegisterPage />;

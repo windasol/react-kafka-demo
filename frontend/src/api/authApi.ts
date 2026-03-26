@@ -47,3 +47,15 @@ export const resetPassword = async (request: ResetPasswordRequest): Promise<{ me
   const response = await axios.post<{ message: string }>(`${API_BASE}/api/auth/reset-password`, request);
   return response.data;
 };
+
+export const kakaoLogin = async (code: string): Promise<AuthResponse> => {
+  const response = await axios.post<AuthResponse>(`${API_BASE}/api/auth/kakao`, { code });
+  return response.data;
+};
+
+export const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID || '';
+export const KAKAO_REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI || window.location.origin;
+
+export const getKakaoLoginUrl = (): string => {
+  return `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(KAKAO_REDIRECT_URI)}&response_type=code`;
+};

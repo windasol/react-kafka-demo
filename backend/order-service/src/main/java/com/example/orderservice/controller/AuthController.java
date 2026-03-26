@@ -29,6 +29,11 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/kakao")
+    public ResponseEntity<AuthResponse> kakaoLogin(@Valid @RequestBody KakaoLoginRequest request) {
+        return ResponseEntity.ok(authService.kakaoLogin(request));
+    }
+
     @PostMapping("/find-username")
     public ResponseEntity<java.util.Map<String, String>> findUsername(@Valid @RequestBody FindUsernameRequest request) {
         String username = authService.findUsername(request);

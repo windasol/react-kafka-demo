@@ -26,3 +26,7 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID:your-kakao-rest-api-key}
+  redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:5173}

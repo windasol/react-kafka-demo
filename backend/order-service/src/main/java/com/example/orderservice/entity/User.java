@@ -26,6 +26,9 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    private String provider;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     protected User() {}
@@ -35,6 +38,17 @@ public class User {
         user.username = username;
         user.password = encodedPassword;
         user.email = email;
+        user.provider = "LOCAL";
+        user.createdAt = LocalDateTime.now();
+        return user;
+    }
+
+    public static User createOAuth(String username, String email, String provider) {
+        User user = new User();
+        user.username = username;
+        user.password = "OAUTH_USER";
+        user.email = email;
+        user.provider = provider;
         user.createdAt = LocalDateTime.now();
         return user;
     }

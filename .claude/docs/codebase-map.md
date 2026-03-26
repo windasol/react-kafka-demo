@@ -10,28 +10,29 @@
 | `entity/Order.java` | JPA. `create(Long,String,int,int)`, `changeStatus(OrderStatus)`, `confirm()`, `ship()`, `deliver()`, `cancel()` |
 | `entity/Product.java` | JPA. `create(String,int,int)`, `update(String,int,int)`, `deductStock(int):boolean`, `restoreStock(int)` |
 | `entity/OrderStatus.java` | enum. CREATED→CONFIRMED→SHIPPED→DELIVERED, CREATED/CONFIRMED→CANCELLED. `canTransitionTo()`, `isCancellable()` |
-| `entity/User.java` | JPA. `create(String,String,String)`. 필드: id, username(unique), password(BCrypt), email, createdAt. `changePassword(String)` |
+| `entity/User.java` | JPA. `create(String,String,String)`, `createOAuth(String,String,String)`. 필드: id, username(unique), password, email, provider(LOCAL/KAKAO), createdAt. `changePassword(String)` |
 
 ### Controller
 | 파일 | 엔드포인트 |
 |------|-----------|
 | `controller/OrderController.java` | POST `/api/orders`, GET `/api/orders`, GET `?paged&page=0&size=7`, GET `?search&page&keyword&status&dateFrom&dateTo`, GET `/{id}`, PATCH `/{id}/status`, PATCH `/{id}/cancel` |
 | `controller/ProductController.java` | POST/GET/GET{id}/PUT{id}/DELETE{id} `/api/products` |
-| `controller/AuthController.java` | POST `/api/auth/register`, POST `/api/auth/login`, POST `/api/auth/find-username`, POST `/api/auth/reset-password` |
+| `controller/AuthController.java` | POST `/api/auth/register`, POST `/api/auth/login`, POST `/api/auth/kakao`, POST `/api/auth/find-username`, POST `/api/auth/reset-password` |
 
 ### Service
 | 파일 | 메서드 |
 |------|--------|
 | `service/OrderService.java` | `placeOrder(OrderRequest)→Order`, `changeOrderStatus(Long,OrderStatus)→Order`, `cancelOrder(Long)→Order`, `getOrdersPaged(int,int)→PageResponse`, `searchOrders(int,int,String,OrderStatus,LocalDate,LocalDate)→PageResponse` |
 | `service/ProductService.java` | `createProduct`, `getProducts`, `getProduct`, `updateProduct`, `deleteProduct` |
-| `service/AuthService.java` | `register(RegisterRequest)→AuthResponse`, `login(LoginRequest)→AuthResponse`, `findUsername(FindUsernameRequest)→String`, `resetPassword(ResetPasswordRequest)→void` |
+| `service/AuthService.java` | `register(RegisterRequest)→AuthResponse`, `login(LoginRequest)→AuthResponse`, `kakaoLogin(KakaoLoginRequest)→AuthResponse`, `findUsername(FindUsernameRequest)→String`, `resetPassword(ResetPasswordRequest)→void` |
+| `service/KakaoOAuthService.java` | `getAccessToken(String code)→String`, `getUserInfo(String accessToken)→Map`. 카카오 인가코드↔액세스토큰 교환, 사용자정보 조회 |
 
 ### Repository
 | 파일 | 핵심 쿼리 |
 |------|----------|
 | `repository/OrderRepository.java` | `findAll(Pageable)→Page`, `searchByFilter(keyword,status,from,to,Pageable)→Page`, 커서용: `findByIdLessThanOrderByIdDesc`, `findOrdersByFilter/Before` |
 | `repository/ProductRepository.java` | `findAllByOrderByCreatedAtDesc()` |
-| `repository/UserRepository.java` | `findByUsername(String)→Optional<User>`, `existsByUsername(String)`, `findByEmail(String)→Optional<User>`, `findByUsernameAndEmail(String,String)→Optional<User>` |
+| `repository/UserRepository.java` | `findByUsername(String)→Optional<User>`, `existsByUsername(String)`, `findByEmail(String)→Optional<User>`, `findByUsernameAndEmail(String,String)→Optional<User>`, `findByUsernameAndProvider(String,String)→Optional<User>` |
 
 ### DTO
 - `OrderRequest`: productId(@NotNull Long), quantity(@NotNull @Min(1) int)
@@ -43,6 +44,7 @@
 - `RegisterRequest`: username(@NotBlank @Size(3-20)), password(@NotBlank @Size(4-100)), email(@NotBlank @Email)
 - `FindUsernameRequest`: email(@NotBlank @Email)
 - `ResetPasswordRequest`: username(@NotBlank), email(@NotBlank @Email), newPassword(@NotBlank @Size(4-100))
+- `KakaoLoginRequest`: code(@NotBlank)
 - `AuthResponse`: token, username
 
 ### Event (Kafka 토픽)
@@ -88,7 +90,7 @@
 ### API (api/)
 | 파일 | 함수 |
 |------|------|
-| `authApi.ts` | `login(LoginRequest)→AuthResponse`, `register(RegisterRequest)→AuthResponse`, `findUsername(FindUsernameRequest)→{username}`, `resetPassword(ResetPasswordRequest)→{message}` |
+| `authApi.ts` | `login(LoginRequest)→AuthResponse`, `register(RegisterRequest)→AuthResponse`, `kakaoLogin(code)→AuthResponse`, `getKakaoLoginUrl()→string`, `findUsername(FindUsernameRequest)→{username}`, `resetPassword(ResetPasswordRequest)→{message}` |
 | `axiosConfig.ts` | axios 인터셉터: 요청에 JWT Bearer 토큰 자동 첨부, 401시 토큰 제거+새로고침 |
 | `orderApi.ts` | `createOrder`, `fetchOrdersPaged(page,size)→PageResponse`, `searchOrders(params)→PageResponse`, `changeOrderStatus(id,status)`, `cancelOrder(id)` |
 | `productApi.ts` | `fetchProducts`, `createProduct`, `updateProduct`, `deleteProduct` |

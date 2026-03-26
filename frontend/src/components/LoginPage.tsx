@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { getKakaoLoginUrl, KAKAO_CLIENT_ID } from '../api/authApi';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -64,6 +65,21 @@ function LoginPage() {
             {loading ? '처리중...' : '로그인'}
           </button>
         </form>
+
+        {KAKAO_CLIENT_ID && (
+          <div className="social-login">
+            <div className="divider"><span>또는</span></div>
+            <button
+              className="kakao-login-btn"
+              onClick={() => { window.location.href = getKakaoLoginUrl(); }}
+            >
+              <svg className="kakao-icon" viewBox="0 0 24 24" width="20" height="20">
+                <path d="M12 3C6.48 3 2 6.36 2 10.44c0 2.61 1.74 4.91 4.36 6.22l-1.1 4.07c-.1.35.31.64.62.44l4.83-3.2c.42.04.85.07 1.29.07 5.52 0 10-3.36 10-7.6C22 6.36 17.52 3 12 3z" fill="#3C1E1E"/>
+              </svg>
+              카카오 로그인
+            </button>
+          </div>
+        )}
 
         <div className="auth-links">
           <button className="link-btn" onClick={() => setAuthPage('find-account')}>

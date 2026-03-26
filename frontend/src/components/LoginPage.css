@@ -168,6 +168,54 @@
   color: #666;
 }
 
+.social-login {
+  margin-top: 20px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.divider span {
+  padding: 0 12px;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.kakao-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #FEE500;
+  color: #3C1E1E;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.kakao-login-btn:hover {
+  background: #F0D800;
+}
+
+.kakao-icon {
+  flex-shrink: 0;
+}
+
 .result-box {
   margin-top: 16px;
   padding: 14px 16px;

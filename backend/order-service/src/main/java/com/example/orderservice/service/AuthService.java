@@ -8,8 +8,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 /**
- * 인증 서비스 — 회원가입, 로그인
+ * 인증 서비스 — 회원가입, 로그인, 카카오 로그인
  */
 @Service
 public class AuthService {
@@ -17,11 +19,14 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final KakaoOAuthService kakaoOAuthService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       JwtUtil jwtUtil, KakaoOAuthService kakaoOAuthService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.kakaoOAuthService = kakaoOAuthService;
     }
 
     /** 회원가입 */
@@ -52,6 +57,25 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("해당 이메일로 등록된 계정이 없습니다."));
         return user.getUsername();
+    }
+
+    /** 카카오 로그인 */
+    @Transactional
+    public AuthResponse kakaoLogin(KakaoLoginRequest request) {
+        String accessToken = kakaoOAuthService.getAccessToken(request.code());
+        Map<String, String> userInfo = kakaoOAuthService.getUserInfo(accessToken);
+
+        String kakaoUsername = "kakao_" + userInfo.get("id");
+        String nickname = userInfo.get("nickname");
+
+        User user = userRepository.findByUsernameAndProvider(kakaoUsername, "KAKAO")
+                .orElseGet(() -> {
+                    User newUser = User.createOAuth(kakaoUsername, kakaoUsername + "@kakao.com", "KAKAO");
+                    return userRepository.save(newUser);
+                });
+
+        String token = jwtUtil.generateToken(user.getUsername());
+        return new AuthResponse(token, nickname);
     }
 
     /** 비밀번호 재설정 */
