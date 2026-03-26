@@ -54,6 +54,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 인증 관련 예외 (회원가입 중복, 로그인 실패 등) → 400 Bad Request
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));
+    }
+
+    /**
      * 요청 유효성 검증 실패 → 400 Bad Request
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)

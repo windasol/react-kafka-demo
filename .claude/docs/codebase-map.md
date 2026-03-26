@@ -10,24 +10,28 @@
 | `entity/Order.java` | JPA. `create(Long,String,int,int)`, `changeStatus(OrderStatus)`, `confirm()`, `ship()`, `deliver()`, `cancel()` |
 | `entity/Product.java` | JPA. `create(String,int,int)`, `update(String,int,int)`, `deductStock(int):boolean`, `restoreStock(int)` |
 | `entity/OrderStatus.java` | enum. CREATED→CONFIRMED→SHIPPED→DELIVERED, CREATED/CONFIRMED→CANCELLED. `canTransitionTo()`, `isCancellable()` |
+| `entity/User.java` | JPA. `create(String,String)`. 필드: id, username(unique), password(BCrypt), createdAt |
 
 ### Controller
 | 파일 | 엔드포인트 |
 |------|-----------|
 | `controller/OrderController.java` | POST `/api/orders`, GET `/api/orders`, GET `?paged&page=0&size=7`, GET `?search&page&keyword&status&dateFrom&dateTo`, GET `/{id}`, PATCH `/{id}/status`, PATCH `/{id}/cancel` |
 | `controller/ProductController.java` | POST/GET/GET{id}/PUT{id}/DELETE{id} `/api/products` |
+| `controller/AuthController.java` | POST `/api/auth/register`, POST `/api/auth/login` |
 
 ### Service
 | 파일 | 메서드 |
 |------|--------|
 | `service/OrderService.java` | `placeOrder(OrderRequest)→Order`, `changeOrderStatus(Long,OrderStatus)→Order`, `cancelOrder(Long)→Order`, `getOrdersPaged(int,int)→PageResponse`, `searchOrders(int,int,String,OrderStatus,LocalDate,LocalDate)→PageResponse` |
 | `service/ProductService.java` | `createProduct`, `getProducts`, `getProduct`, `updateProduct`, `deleteProduct` |
+| `service/AuthService.java` | `register(RegisterRequest)→AuthResponse`, `login(LoginRequest)→AuthResponse` |
 
 ### Repository
 | 파일 | 핵심 쿼리 |
 |------|----------|
 | `repository/OrderRepository.java` | `findAll(Pageable)→Page`, `searchByFilter(keyword,status,from,to,Pageable)→Page`, 커서용: `findByIdLessThanOrderByIdDesc`, `findOrdersByFilter/Before` |
 | `repository/ProductRepository.java` | `findAllByOrderByCreatedAtDesc()` |
+| `repository/UserRepository.java` | `findByUsername(String)→Optional<User>`, `existsByUsername(String)` |
 
 ### DTO
 - `OrderRequest`: productId(@NotNull Long), quantity(@NotNull @Min(1) int)
@@ -35,6 +39,9 @@
 - `OrderStatusRequest`: status(@NotNull OrderStatus)
 - `PageResponse<T>`: content, page, size, totalElements, totalPages. `of(Page)` 팩토리
 - `CursorPage<T>`: content, nextCursor, hasNext. `of(List,int,Function)` 팩토리
+- `LoginRequest`: username(@NotBlank), password(@NotBlank @Size(min=4))
+- `RegisterRequest`: username(@NotBlank @Size(3-20)), password(@NotBlank @Size(4-100))
+- `AuthResponse`: token, username
 
 ### Event (Kafka 토픽)
 - `OrderCreatedEvent` → `order-events`: orderId, productName, quantity, status
@@ -42,8 +49,11 @@
 - `OrderCancelledEvent` → `order-cancelled-events`: orderId, productId, productName, quantity
 
 ### Exception / Config
-- `GlobalExceptionHandler`: OrderNotFound(404), InvalidOrderStatus(400), ProductNotFound(404), InsufficientStock(409)
-- `KafkaProducerConfig`, `CorsConfig`(localhost:5173,3000)
+- `GlobalExceptionHandler`: OrderNotFound(404), InvalidOrderStatus(400), ProductNotFound(404), InsufficientStock(409), IllegalArgument(400)
+- `KafkaProducerConfig`, `CorsConfig`(localhost:5173,3000, allowCredentials)
+- `SecurityConfig`: JWT 무상태 인증. `/api/auth/**` permitAll, 나머지 authenticated. BCryptPasswordEncoder
+- `JwtUtil`: 토큰 생성/검증. HS256, 24시간 만료
+- `JwtAuthenticationFilter`: Authorization Bearer 헤더에서 토큰 추출 → SecurityContext 설정
 
 ---
 
@@ -76,6 +86,8 @@
 ### API (api/)
 | 파일 | 함수 |
 |------|------|
+| `authApi.ts` | `login(LoginRequest)→AuthResponse`, `register(RegisterRequest)→AuthResponse` |
+| `axiosConfig.ts` | axios 인터셉터: 요청에 JWT Bearer 토큰 자동 첨부, 401시 토큰 제거+새로고침 |
 | `orderApi.ts` | `createOrder`, `fetchOrdersPaged(page,size)→PageResponse`, `searchOrders(params)→PageResponse`, `changeOrderStatus(id,status)`, `cancelOrder(id)` |
 | `productApi.ts` | `fetchProducts`, `createProduct`, `updateProduct`, `deleteProduct` |
 | `notificationApi.ts` | `fetchNotificationsPaged(cursor,size)→CursorPage`, `markAsRead`, `markAllAsRead`, `deleteNotification`, `deleteAllNotifications`, `getNotificationStreamUrl` |
@@ -90,7 +102,13 @@
 | `Pagination.tsx` | currentPage, totalPages, onPageChange | « ‹ 1 2 3 › » 버튼 (최대 5개) |
 | `ProductList.tsx` | onProductChanged, refreshTrigger | 상품 CRUD, 인라인 편집 |
 | `NotificationList.tsx` | (없음) | 커서 무한스크롤, SSE 실시간, 읽음/삭제 |
-| `App.tsx` | — | 루트. refreshTrigger/productTrigger로 컴포넌트 간 동기화 |
+| `LoginPage.tsx` | (없음) | 로그인/회원가입 폼. useAuth() 사용 |
+| `App.tsx` | — | 루트. 미로그인→LoginPage, 로그인→메인. 로그아웃 버튼 |
+
+### 컨텍스트 (contexts/)
+| 파일 | 기능 |
+|------|------|
+| `AuthContext.tsx` | AuthProvider, useAuth(). localStorage에 token/username 저장. login/register/logout |
 
 ### 훅 (hooks/)
 - `useInfiniteScroll.ts`: IntersectionObserver 기반. `(onLoadMore, hasNext, isLoading, rootRef?) → sentinelRef`
