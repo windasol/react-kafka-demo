@@ -33,5 +33,7 @@ export const deleteAllNotifications = async (): Promise<void> => {
 };
 
 export const getNotificationStreamUrl = (): string => {
-  return `${API_BASE}/api/notifications/stream`;
+  const token = localStorage.getItem('token');
+  const base = `${API_BASE}/api/notifications/stream`;
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 };
