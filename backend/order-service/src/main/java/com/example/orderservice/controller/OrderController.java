@@ -9,6 +9,7 @@ import com.example.orderservice.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -33,8 +34,9 @@ public class OrderController {
      * @Valid로 요청 입력값을 검증한다. (방어적 프로그래밍)
      */
     @PostMapping
-    public ResponseEntity<Order> createOrder(@Valid @RequestBody OrderRequest request) {
-        Order created = orderService.placeOrder(request);
+    public ResponseEntity<Order> createOrder(@Valid @RequestBody OrderRequest request,
+                                             Authentication authentication) {
+        Order created = orderService.placeOrder(request, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 

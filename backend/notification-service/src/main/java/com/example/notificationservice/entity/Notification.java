@@ -18,6 +18,9 @@ public class Notification {
     private Long id;
 
     @Column(nullable = false)
+    private String username;
+
+    @Column(nullable = false)
     private String message;
 
     @Column(nullable = false)
@@ -39,8 +42,9 @@ public class Notification {
     /**
      * 알림 생성 팩토리 메서드
      */
-    public static Notification create(Long orderId, NotificationType type, String message) {
+    public static Notification create(String username, Long orderId, NotificationType type, String message) {
         Notification notification = new Notification();
+        notification.username = username;
         notification.orderId = orderId;
         notification.type = type;
         notification.message = message;

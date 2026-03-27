@@ -8,57 +8,66 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * SSE(Server-Sent Events) 연결 관리 서비스
- * 클라이언트 연결 생성/제거 및 실시간 알림 브로드캐스트를 담당한다.
+ * SSE 연결 관리 서비스 — username 별로 emitter를 관리한다.
+ * 알림은 해당 사용자의 연결에만 전송된다.
  */
 @Service
 public class SseEmitterService {
 
     private static final Logger log = LoggerFactory.getLogger(SseEmitterService.class);
 
-    // 동시성 안전한 리스트로 활성 연결 관리
-    private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
+    // username → 해당 사용자의 SSE 연결 목록
+    private final ConcurrentHashMap<String, List<SseEmitter>> userEmitters = new ConcurrentHashMap<>();
 
     /**
-     * 새 SSE 연결 생성 (타임아웃 30분)
-     * 연결 즉시 ping 이벤트를 전송해 응답 헤더를 flush한다.
+     * 특정 사용자의 SSE 연결 생성 (타임아웃 30분)
      */
-    public SseEmitter createEmitter() {
+    public SseEmitter createEmitter(String username) {
         SseEmitter emitter = new SseEmitter(1_800_000L);
 
-        emitters.add(emitter);
-        emitter.onCompletion(() -> emitters.remove(emitter));
+        userEmitters.computeIfAbsent(username, k -> new CopyOnWriteArrayList<>()).add(emitter);
+
+        emitter.onCompletion(() -> removeEmitter(username, emitter));
         emitter.onTimeout(() -> {
-            emitters.remove(emitter);
+            removeEmitter(username, emitter);
             emitter.complete();
         });
-        emitter.onError(e -> emitters.remove(emitter));
+        emitter.onError(e -> removeEmitter(username, emitter));
 
         try {
             emitter.send(SseEmitter.event().name("ping").data("connected"));
         } catch (IOException e) {
-            emitters.remove(emitter);
+            removeEmitter(username, emitter);
         }
 
         return emitter;
     }
 
     /**
-     * 연결된 모든 클라이언트에 알림 브로드캐스트
-     * 전송 실패한 emitter는 즉시 제거한다.
+     * 특정 사용자에게만 알림 전송
      */
-    public void broadcast(Notification notification) {
+    public void sendToUser(String username, Notification notification) {
+        List<SseEmitter> emitters = userEmitters.getOrDefault(username, List.of());
         for (SseEmitter emitter : emitters) {
             try {
-                emitter.send(SseEmitter.event()
-                        .name("notification")
-                        .data(notification));
+                emitter.send(SseEmitter.event().name("notification").data(notification));
             } catch (IOException e) {
-                log.warn("SSE 전송 실패, emitter 제거: {}", e.getMessage());
-                emitters.remove(emitter);
+                log.warn("SSE 전송 실패 [{}], emitter 제거: {}", username, e.getMessage());
+                removeEmitter(username, emitter);
+            }
+        }
+    }
+
+    private void removeEmitter(String username, SseEmitter emitter) {
+        List<SseEmitter> emitters = userEmitters.get(username);
+        if (emitters != null) {
+            emitters.remove(emitter);
+            if (emitters.isEmpty()) {
+                userEmitters.remove(username);
             }
         }
     }

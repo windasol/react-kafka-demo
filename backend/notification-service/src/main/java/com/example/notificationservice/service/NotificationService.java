@@ -18,12 +18,11 @@ import java.util.Map;
 
 /**
  * 알림 비즈니스 로직 담당 서비스
- * HTTP 관련 코드는 포함하지 않는다. (SRP 원칙)
+ * 모든 알림 조회/변경은 username 기반으로 사용자별 격리된다.
  */
 @Service
 public class NotificationService {
 
-    // 상태별 한국어 표시명
     private static final Map<String, String> STATUS_LABELS = Map.of(
             "CREATED", "생성",
             "CONFIRMED", "확인",
@@ -32,7 +31,6 @@ public class NotificationService {
             "CANCELLED", "취소"
     );
 
-    // 주문 상태 → 알림 타입 매핑
     private static final Map<String, NotificationType> STATUS_TYPE_MAP = Map.of(
             "CONFIRMED", NotificationType.ORDER_CONFIRMED,
             "SHIPPED", NotificationType.ORDER_SHIPPED,
@@ -49,25 +47,16 @@ public class NotificationService {
         this.sseEmitterService = sseEmitterService;
     }
 
-    /**
-     * Kafka 주문 생성 이벤트 수신 후 알림 저장 및 SSE 브로드캐스트
-     */
     @KafkaListener(topics = "order-events", groupId = "notification-group")
     public void handleOrderCreatedEvent(OrderCreatedEvent event) {
-        // 도메인 팩토리 메서드로 생성 (Setter 직접 사용 금지)
         String message = String.format("새 주문이 생성되었습니다: %s (수량: %d)",
                 event.getProductName(), event.getQuantity());
-        Notification notification = Notification.create(event.getOrderId(), NotificationType.ORDER_CREATED, message);
-
+        Notification notification = Notification.create(
+                event.getUsername(), event.getOrderId(), NotificationType.ORDER_CREATED, message);
         Notification saved = notificationRepository.save(notification);
-
-        // 연결된 모든 SSE 클라이언트에 실시간 알림 전송
-        sseEmitterService.broadcast(saved);
+        sseEmitterService.sendToUser(event.getUsername(), saved);
     }
 
-    /**
-     * Kafka 주문 상태 변경 이벤트 수신 후 알림 저장 및 SSE 브로드캐스트
-     */
     @KafkaListener(
             topics = "order-status-events",
             groupId = "notification-group",
@@ -76,20 +65,15 @@ public class NotificationService {
     public void handleOrderStatusChangedEvent(OrderStatusChangedEvent event) {
         String fromLabel = STATUS_LABELS.getOrDefault(event.getPreviousStatus(), event.getPreviousStatus());
         String toLabel = STATUS_LABELS.getOrDefault(event.getNewStatus(), event.getNewStatus());
-
         NotificationType type = STATUS_TYPE_MAP.getOrDefault(event.getNewStatus(), NotificationType.ORDER_CONFIRMED);
         String message = String.format("주문 상태가 변경되었습니다: %s (%s → %s)",
                 event.getProductName(), fromLabel, toLabel);
-        Notification notification = Notification.create(event.getOrderId(), type, message);
-
+        Notification notification = Notification.create(
+                event.getUsername(), event.getOrderId(), type, message);
         Notification saved = notificationRepository.save(notification);
-
-        sseEmitterService.broadcast(saved);
+        sseEmitterService.sendToUser(event.getUsername(), saved);
     }
 
-    /**
-     * Kafka 주문 취소 이벤트 수신 후 알림 저장 및 SSE 브로드캐스트
-     */
     @KafkaListener(
             topics = "order-cancelled-events",
             groupId = "notification-group",
@@ -98,78 +82,51 @@ public class NotificationService {
     public void handleOrderCancelledEvent(OrderCancelledEvent event) {
         String message = String.format("주문이 취소되었습니다: %s (수량: %d, 재고 복원됨)",
                 event.getProductName(), event.getQuantity());
-        Notification notification = Notification.create(event.getOrderId(), NotificationType.ORDER_CANCELLED, message);
-
+        Notification notification = Notification.create(
+                event.getUsername(), event.getOrderId(), NotificationType.ORDER_CANCELLED, message);
         Notification saved = notificationRepository.save(notification);
-        sseEmitterService.broadcast(saved);
+        sseEmitterService.sendToUser(event.getUsername(), saved);
     }
 
-    /**
-     * 최신 순으로 전체 알림 목록 조회
-     */
-    public List<Notification> getAllNotifications() {
-        return notificationRepository.findAllByOrderByCreatedAtDesc();
+    public List<Notification> getAllNotifications(String username) {
+        return notificationRepository.findByUsernameOrderByCreatedAtDesc(username);
     }
 
-    /**
-     * 특정 알림 읽음 처리
-     * 알림 미존재 시 NotificationNotFoundException 발생 (커스텀 예외 사용)
-     */
-    public Notification markAsRead(Long id) {
+    public Notification markAsRead(Long id, String username) {
         Notification notification = notificationRepository.findById(id)
+                .filter(n -> n.getUsername().equals(username))
                 .orElseThrow(() -> new NotificationNotFoundException(id));
-
-        // 도메인 메서드로 상태 변경 (Setter 직접 사용 금지)
         notification.markAsRead();
         return notificationRepository.save(notification);
     }
 
-    /**
-     * 읽지 않은 알림 전체 읽음 처리
-     */
-    public void markAllAsRead() {
-        List<Notification> unread = notificationRepository.findByIsReadFalse();
-        // 도메인 메서드로 상태 변경
+    public void markAllAsRead(String username) {
+        List<Notification> unread = notificationRepository.findByUsernameAndIsReadFalse(username);
         unread.forEach(Notification::markAsRead);
         notificationRepository.saveAll(unread);
     }
 
-    /**
-     * 커서 기반 페이지네이션으로 알림 목록 조회
-     * hasNext 판단을 위해 size + 1개를 조회한다.
-     */
-    public CursorPage<Notification> getNotificationsPaged(Long cursor, int size) {
+    public CursorPage<Notification> getNotificationsPaged(String username, Long cursor, int size) {
         Pageable pageable = PageRequest.of(0, size + 1);
-
         List<Notification> notifications = (cursor == null)
-                ? notificationRepository.findAllByOrderByIdDesc(pageable)
-                : notificationRepository.findByIdLessThanOrderByIdDesc(cursor, pageable);
-
+                ? notificationRepository.findByUsernameOrderByIdDesc(username, pageable)
+                : notificationRepository.findByUsernameAndIdLessThanOrderByIdDesc(username, cursor, pageable);
         return CursorPage.of(notifications, size, Notification::getId);
     }
 
-    /**
-     * 개별 알림 삭제
-     * 알림 미존재 시 NotificationNotFoundException 발생
-     */
-    public void deleteNotification(Long id) {
-        if (!notificationRepository.existsById(id)) {
-            throw new NotificationNotFoundException(id);
-        }
-        notificationRepository.deleteById(id);
+    public void deleteNotification(Long id, String username) {
+        Notification notification = notificationRepository.findById(id)
+                .filter(n -> n.getUsername().equals(username))
+                .orElseThrow(() -> new NotificationNotFoundException(id));
+        notificationRepository.delete(notification);
     }
 
-    /**
-     * 전체 알림 삭제
-     */
-    public void deleteAllNotifications() {
-        notificationRepository.deleteAll();
+    public void deleteAllNotifications(String username) {
+        List<Notification> notifications = notificationRepository.findByUsernameOrderByCreatedAtDesc(username);
+        notificationRepository.deleteAll(notifications);
     }
 
-    /**
-     * 읽지 않은 알림 수 조회
-     */
-    public long countUnread() {
-        return notificationRepository.countByIsReadFalse();
+    public long countUnread(String username) {
+        return notificationRepository.countByUsernameAndIsReadFalse(username);
     }
 }

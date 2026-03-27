@@ -55,10 +55,9 @@ public class OrderService {
      * 상품 재고를 차감한다. 재고 부족 시 InsufficientStockException 발생
      */
     @Transactional
-    public Order placeOrder(OrderRequest request) {
+    public Order placeOrder(OrderRequest request, String username) {
         Objects.requireNonNull(request, "주문 요청 정보는 필수입니다.");
 
-        // 상품 조회 및 재고 차감
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new ProductNotFoundException(request.productId()));
 
@@ -68,13 +67,12 @@ public class OrderService {
         }
         productRepository.save(product);
 
-        // 주문 생성 (주문 시점의 단가를 함께 저장)
-        Order order = Order.create(product.getId(), product.getName(), request.quantity(), product.getPrice());
+        Order order = Order.create(username, product.getId(), product.getName(), request.quantity(), product.getPrice());
         Order savedOrder = orderRepository.save(order);
 
-        // 주문 생성 이벤트 발행
         OrderCreatedEvent event = new OrderCreatedEvent(
                 savedOrder.getId(),
+                savedOrder.getUsername(),
                 savedOrder.getProductName(),
                 savedOrder.getQuantity(),
                 savedOrder.getStatus().name()
@@ -101,6 +99,7 @@ public class OrderService {
         // 주문 상태 변경 이벤트 발행
         OrderStatusChangedEvent event = new OrderStatusChangedEvent(
                 savedOrder.getId(),
+                savedOrder.getUsername(),
                 savedOrder.getProductName(),
                 previousStatus,
                 savedOrder.getStatus().name()
@@ -134,6 +133,7 @@ public class OrderService {
         // 주문 취소 이벤트 발행
         OrderCancelledEvent event = new OrderCancelledEvent(
                 savedOrder.getId(),
+                savedOrder.getUsername(),
                 savedOrder.getProductId(),
                 savedOrder.getProductName(),
                 savedOrder.getQuantity()

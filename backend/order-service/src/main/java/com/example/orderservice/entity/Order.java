@@ -18,6 +18,9 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String username;
+
     private Long productId;
 
     @Column(nullable = false)
@@ -41,8 +44,9 @@ public class Order {
     /**
      * 주문 생성 팩토리 메서드
      */
-    public static Order create(Long productId, String productName, Integer quantity, Integer unitPrice) {
+    public static Order create(String username, Long productId, String productName, Integer quantity, Integer unitPrice) {
         Order order = new Order();
+        order.username = username;
         order.productId = productId;
         order.productName = productName;
         order.quantity = quantity;

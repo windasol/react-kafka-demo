@@ -12,6 +12,7 @@ import lombok.Setter;
 public class OrderCreatedEvent {
 
     private Long orderId;
+    private String username;
     private String productName;
     private Integer quantity;
     private String status;

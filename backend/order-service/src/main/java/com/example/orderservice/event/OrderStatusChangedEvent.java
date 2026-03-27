@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class OrderStatusChangedEvent {
 
     private Long orderId;
+    private String username;
     private String productName;
     private String previousStatus;
     private String newStatus;

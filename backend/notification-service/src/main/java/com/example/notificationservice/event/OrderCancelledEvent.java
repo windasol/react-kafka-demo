@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class OrderCancelledEvent {
 
     private Long orderId;
+    private String username;
     private Long productId;
     private String productName;
     private Integer quantity;

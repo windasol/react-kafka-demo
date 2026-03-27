@@ -6,12 +6,17 @@ import com.example.notificationservice.service.NotificationService;
 import com.example.notificationservice.service.SseEmitterService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 알림 API Presentation Layer
+ * 모든 요청은 인증된 사용자 기준으로 격리된다.
+ */
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
@@ -26,50 +31,48 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Notification>> getAllNotifications() {
-        return ResponseEntity.ok(notificationService.getAllNotifications());
+    public ResponseEntity<List<Notification>> getAllNotifications(Authentication authentication) {
+        return ResponseEntity.ok(notificationService.getAllNotifications(authentication.getName()));
     }
 
-    /**
-     * 알림 목록 커서 기반 페이지네이션 API
-     */
     @GetMapping(params = "paged")
     public ResponseEntity<CursorPage<Notification>> getNotificationsPaged(
+            Authentication authentication,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "7") int size) {
-        return ResponseEntity.ok(notificationService.getNotificationsPaged(cursor, size));
+        return ResponseEntity.ok(notificationService.getNotificationsPaged(authentication.getName(), cursor, size));
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamNotifications() {
-        return sseEmitterService.createEmitter();
+    public SseEmitter streamNotifications(Authentication authentication) {
+        return sseEmitterService.createEmitter(authentication.getName());
     }
 
     @PatchMapping("/{id}/read")
-    public ResponseEntity<Notification> markAsRead(@PathVariable Long id) {
-        return ResponseEntity.ok(notificationService.markAsRead(id));
+    public ResponseEntity<Notification> markAsRead(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(notificationService.markAsRead(id, authentication.getName()));
     }
 
     @PatchMapping("/read-all")
-    public ResponseEntity<Void> markAllAsRead() {
-        notificationService.markAllAsRead();
+    public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
+        notificationService.markAllAsRead(authentication.getName());
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
-        notificationService.deleteNotification(id);
+    public ResponseEntity<Void> deleteNotification(@PathVariable Long id, Authentication authentication) {
+        notificationService.deleteNotification(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteAllNotifications() {
-        notificationService.deleteAllNotifications();
+    public ResponseEntity<Void> deleteAllNotifications(Authentication authentication) {
+        notificationService.deleteAllNotifications(authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/unread-count")
-    public ResponseEntity<Map<String, Long>> getUnreadCount() {
-        return ResponseEntity.ok(Map.of("count", notificationService.countUnread()));
+    public ResponseEntity<Map<String, Long>> getUnreadCount(Authentication authentication) {
+        return ResponseEntity.ok(Map.of("count", notificationService.countUnread(authentication.getName())));
     }
 }
