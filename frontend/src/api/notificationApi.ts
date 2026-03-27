@@ -32,8 +32,5 @@ export const deleteAllNotifications = async (): Promise<void> => {
   await axios.delete(`${API_BASE}/api/notifications`);
 };
 
-export const getNotificationStreamUrl = (): string => {
-  const token = localStorage.getItem('token');
-  const base = `${API_BASE}/api/notifications/stream`;
-  return token ? `${base}?token=${encodeURIComponent(token)}` : base;
-};
+export const getNotificationStreamUrl = (): string =>
+  `${API_BASE}/api/notifications/stream`;

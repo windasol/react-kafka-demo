@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import axios from 'axios';
 import { login as apiLogin, register as apiRegister } from '../api/authApi';
 import type { LoginRequest, RegisterRequest } from '../api/authApi';
 
@@ -11,46 +12,36 @@ interface AuthContextType {
   setAuthPage: (page: AuthPage) => void;
   login: (request: LoginRequest) => Promise<void>;
   register: (request: RegisterRequest) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [username, setUsername] = useState<string | null>(() => localStorage.getItem('username'));
-  const [authPage, setAuthPage] = useState<AuthPage>('login');
-  const isLoggedIn = username !== null;
+/** 서버가 설정한 non-HttpOnly username 쿠키에서 사용자명 읽기 */
+function getUsernameFromCookie(): string | null {
+  const match = document.cookie.match(/(?:^|;\s*)username=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
-  // 카카오 OAuth2 콜백: URL 쿼리 파라미터에서 토큰 추출
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const kakaoToken = params.get('kakaoToken');
-    const kakaoUsername = params.get('kakaoUsername');
-    if (kakaoToken && kakaoUsername) {
-      localStorage.setItem('token', kakaoToken);
-      localStorage.setItem('username', kakaoUsername);
-      setUsername(kakaoUsername);
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, []);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [username, setUsername] = useState<string | null>(() => getUsernameFromCookie());
+  const [authPage, setAuthPage] = useState<AuthPage>('login');
+
+  const isLoggedIn = username !== null;
 
   const login = useCallback(async (request: LoginRequest) => {
     const response = await apiLogin(request);
-    localStorage.setItem('token', response.token);
-    localStorage.setItem('username', response.username);
+    // 쿠키는 서버가 Set-Cookie로 자동 설정, 여기서는 상태만 갱신
     setUsername(response.username);
   }, []);
 
   const register = useCallback(async (request: RegisterRequest) => {
     const response = await apiRegister(request);
-    localStorage.setItem('token', response.token);
-    localStorage.setItem('username', response.username);
     setUsername(response.username);
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
+  const logout = useCallback(async () => {
+    await axios.post(`${import.meta.env.VITE_AUTH_API_URL}/api/auth/logout`);
     setUsername(null);
     setAuthPage('login');
   }, []);

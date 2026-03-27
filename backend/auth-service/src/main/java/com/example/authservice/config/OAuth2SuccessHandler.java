@@ -1,5 +1,6 @@
 package com.example.authservice.config;
 
+import com.example.authservice.controller.AuthController;
 import com.example.jwtcommon.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,12 +10,10 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
- * 카카오 OAuth2 인증 성공 시 JWT 발급 후 프론트엔드로 리다이렉트
+ * 카카오 OAuth2 인증 성공 시 JWT를 HttpOnly 쿠키로 발급 후 프론트엔드로 리다이렉트
  */
 @Component
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -35,9 +34,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String username = "kakao_" + kakaoId;
 
         String token = jwtUtil.generateToken(username);
-        String encodedUsername = URLEncoder.encode(username, StandardCharsets.UTF_8);
+        AuthController.setAuthCookies(response, token, username);
 
-        String redirectUrl = "http://localhost:5173/?kakaoToken=" + token + "&kakaoUsername=" + encodedUsername;
-        getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+        getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/");
     }
 }

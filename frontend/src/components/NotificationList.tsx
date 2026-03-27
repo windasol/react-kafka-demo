@@ -40,7 +40,7 @@ export default function NotificationList() {
   useEffect(() => {
     loadPage(null);
 
-    const eventSource = new EventSource(getNotificationStreamUrl());
+    const eventSource = new EventSource(getNotificationStreamUrl(), { withCredentials: true });
 
     // SSE로 들어오는 새 알림은 목록 상단에 추가 (커서/hasNext와 독립)
     eventSource.addEventListener('notification', (event) => {
