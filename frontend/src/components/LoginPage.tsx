@@ -70,7 +70,7 @@ function LoginPage() {
         </div>
 
         <a
-          href={`${import.meta.env.VITE_ORDER_API_URL || ''}/oauth2/authorization/kakao`}
+          href={`${import.meta.env.VITE_AUTH_API_URL || ''}/oauth2/authorization/kakao`}
           className="kakao-btn"
         >
           <svg className="kakao-icon" viewBox="0 0 24 24" fill="currentColor">
