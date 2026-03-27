@@ -1,6 +1,6 @@
 package com.example.authservice.config;
 
-import com.example.authservice.controller.AuthController;
+import com.example.authservice.support.CookieUtils;
 import com.example.jwtcommon.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +34,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String username = "kakao_" + kakaoId;
 
         String token = jwtUtil.generateToken(username);
-        AuthController.setAuthCookies(response, token, username);
+        CookieUtils.setAuthCookies(response, token, username);
 
         getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/");
     }
