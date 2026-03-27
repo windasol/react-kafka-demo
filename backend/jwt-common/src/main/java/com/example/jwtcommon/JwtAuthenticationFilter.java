@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -16,7 +15,6 @@ import java.util.List;
  * JWT 인증 필터 — order-service·notification-service 공유
  * Authorization 헤더 또는 쿼리 파라미터(SSE 등 헤더 불가 상황)에서 토큰 추출
  */
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;

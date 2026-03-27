@@ -3,7 +3,7 @@ package com.example.notificationservice;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = {"com.example.notificationservice", "com.example.jwtcommon"})
+@SpringBootApplication
 public class NotificationServiceApplication {
 
     public static void main(String[] args) {
