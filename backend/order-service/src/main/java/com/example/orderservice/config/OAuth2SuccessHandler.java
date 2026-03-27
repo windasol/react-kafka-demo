@@ -1,5 +1,6 @@
 package com.example.orderservice.config;
 
+import com.example.jwtcommon.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;

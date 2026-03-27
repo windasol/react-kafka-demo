@@ -1,4 +1,4 @@
-package com.example.notificationservice.config;
+package com.example.jwtcommon;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -8,17 +8,31 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 /**
- * JWT 토큰 검증 유틸리티 — order-service와 동일한 시크릿 키로 토큰 검증
+ * JWT 토큰 생성 및 검증 유틸리티 — order-service·notification-service 공유
  */
 @Component
 public class JwtUtil {
 
     private final SecretKey key;
+    private final long expirationMs;
 
-    public JwtUtil(@Value("${jwt.secret:my-super-secret-key-for-jwt-token-demo-app-2024}") String secret) {
+    public JwtUtil(
+            @Value("${jwt.secret:my-super-secret-key-for-jwt-token-demo-app-2024}") String secret,
+            @Value("${jwt.expiration-ms:86400000}") long expirationMs) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expirationMs = expirationMs;
+    }
+
+    public String generateToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .signWith(key)
+                .compact();
     }
 
     public String extractUsername(String token) {

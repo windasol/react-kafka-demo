@@ -1,6 +1,6 @@
 package com.example.orderservice.service;
 
-import com.example.orderservice.config.JwtUtil;
+import com.example.jwtcommon.JwtUtil;
 import com.example.orderservice.dto.*;
 import com.example.orderservice.entity.User;
 import com.example.orderservice.repository.UserRepository;

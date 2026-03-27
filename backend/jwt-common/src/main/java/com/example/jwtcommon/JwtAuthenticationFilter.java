@@ -1,4 +1,4 @@
-package com.example.orderservice.config;
+package com.example.jwtcommon;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,7 +13,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * JWT 인증 필터 — Authorization 헤더에서 토큰을 추출하여 인증 처리
+ * JWT 인증 필터 — order-service·notification-service 공유
+ * Authorization 헤더 또는 쿼리 파라미터(SSE 등 헤더 불가 상황)에서 토큰 추출
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -27,16 +28,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
+        String token = null;
 
+        String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            if (jwtUtil.isValid(token)) {
-                String username = jwtUtil.extractUsername(token);
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(username, null, List.of());
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
+            token = header.substring(7);
+        }
+
+        if (token == null) {
+            token = request.getParameter("token");
+        }
+
+        if (token != null && jwtUtil.isValid(token)) {
+            String username = jwtUtil.extractUsername(token);
+            UsernamePasswordAuthenticationToken auth =
+                    new UsernamePasswordAuthenticationToken(username, null, List.of());
+            SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
         filterChain.doFilter(request, response);
