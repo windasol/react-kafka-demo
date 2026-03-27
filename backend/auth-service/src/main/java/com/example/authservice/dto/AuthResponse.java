@@ -1,4 +1,4 @@
-package com.example.orderservice.dto;
+package com.example.authservice.dto;
 
 public record AuthResponse(
         String token,

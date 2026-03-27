@@ -1,4 +1,4 @@
-package com.example.orderservice.dto;
+package com.example.authservice.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

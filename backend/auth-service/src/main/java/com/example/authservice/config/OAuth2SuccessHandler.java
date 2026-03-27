@@ -1,4 +1,4 @@
-package com.example.orderservice.config;
+package com.example.authservice.config;
 
 import com.example.jwtcommon.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;

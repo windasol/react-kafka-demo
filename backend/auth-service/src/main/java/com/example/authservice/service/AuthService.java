@@ -1,9 +1,9 @@
-package com.example.orderservice.service;
+package com.example.authservice.service;
 
+import com.example.authservice.dto.*;
+import com.example.authservice.entity.User;
+import com.example.authservice.repository.UserRepository;
 import com.example.jwtcommon.JwtUtil;
-import com.example.orderservice.dto.*;
-import com.example.orderservice.entity.User;
-import com.example.orderservice.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

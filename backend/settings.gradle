@@ -8,5 +8,6 @@ pluginManagement {
 rootProject.name = 'kafka-demo'
 
 include 'jwt-common'
+include 'auth-service'
 include 'order-service'
 include 'notification-service'

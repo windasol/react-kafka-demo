@@ -1,6 +1,6 @@
-package com.example.orderservice.repository;
+package com.example.authservice.repository;
 
-import com.example.orderservice.entity.User;
+import com.example.authservice.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

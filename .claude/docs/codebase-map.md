@@ -1,6 +1,45 @@
 # 코드베이스 맵
 
-## Order Service (backend/order-service, 포트 8080)
+## Auth Service (backend/auth-service, 포트 8080)
+
+경로 접두사: `src/main/java/com/example/authservice/`
+
+### Entity
+| 파일 | 핵심 |
+|------|------|
+| `entity/User.java` | JPA. `create(String,String,String)`, `createOAuth(String,String,String)`. 필드: id, username(unique), password(BCrypt), email, provider, createdAt. `changePassword(String)` |
+
+### Controller
+| 파일 | 엔드포인트 |
+|------|-----------|
+| `controller/AuthController.java` | POST `/api/auth/register`, POST `/api/auth/login`, POST `/api/auth/find-username`, POST `/api/auth/reset-password` |
+
+### Service
+| 파일 | 메서드 |
+|------|--------|
+| `service/AuthService.java` | `register(RegisterRequest)→AuthResponse`, `login(LoginRequest)→AuthResponse`, `findUsername(FindUsernameRequest)→String`, `resetPassword(ResetPasswordRequest)→void` |
+
+### Repository
+| 파일 | 핵심 쿼리 |
+|------|----------|
+| `repository/UserRepository.java` | `findByUsername(String)→Optional<User>`, `existsByUsername(String)`, `findByEmail(String)→Optional<User>`, `findByUsernameAndEmail(String,String)→Optional<User>` |
+
+### DTO
+- `LoginRequest`: username(@NotBlank), password(@NotBlank @Size(min=4))
+- `RegisterRequest`: username(@NotBlank @Size(3-20)), password(@NotBlank @Size(4-100)), email(@NotBlank @Email)
+- `FindUsernameRequest`: email(@NotBlank @Email)
+- `ResetPasswordRequest`: username(@NotBlank), email(@NotBlank @Email), newPassword(@NotBlank @Size(4-100))
+- `AuthResponse`: token, username
+
+### Config
+- `SecurityConfig`: 카카오 OAuth2 + JWT. `/api/auth/**`, `/oauth2/**`, `/login/oauth2/**` permitAll. BCryptPasswordEncoder. SessionCreationPolicy.IF_REQUIRED
+- `KakaoOAuth2UserService`: 카카오 사용자 정보 로드 및 User DB 저장
+- `OAuth2SuccessHandler`: JWT 발급 후 `http://localhost:5173/?kakaoToken=...` 리다이렉트
+- `GlobalExceptionHandler`: IllegalArgument(400), MethodArgumentNotValid(400)
+
+---
+
+## Order Service (backend/order-service, 포트 8083)
 
 경로 접두사: `src/main/java/com/example/orderservice/`
 
@@ -10,28 +49,23 @@
 | `entity/Order.java` | JPA. `create(Long,String,int,int)`, `changeStatus(OrderStatus)`, `confirm()`, `ship()`, `deliver()`, `cancel()` |
 | `entity/Product.java` | JPA. `create(String,int,int)`, `update(String,int,int)`, `deductStock(int):boolean`, `restoreStock(int)` |
 | `entity/OrderStatus.java` | enum. CREATED→CONFIRMED→SHIPPED→DELIVERED, CREATED/CONFIRMED→CANCELLED. `canTransitionTo()`, `isCancellable()` |
-| `entity/User.java` | JPA. `create(String,String,String)`. 필드: id, username(unique), password(BCrypt), email, createdAt. `changePassword(String)` |
-
 ### Controller
 | 파일 | 엔드포인트 |
 |------|-----------|
 | `controller/OrderController.java` | POST `/api/orders`, GET `/api/orders`, GET `?paged&page=0&size=7`, GET `?search&page&keyword&status&dateFrom&dateTo`, GET `/{id}`, PATCH `/{id}/status`, PATCH `/{id}/cancel` |
 | `controller/ProductController.java` | POST/GET/GET{id}/PUT{id}/DELETE{id} `/api/products` |
-| `controller/AuthController.java` | POST `/api/auth/register`, POST `/api/auth/login`, POST `/api/auth/find-username`, POST `/api/auth/reset-password` |
 
 ### Service
 | 파일 | 메서드 |
 |------|--------|
 | `service/OrderService.java` | `placeOrder(OrderRequest)→Order`, `changeOrderStatus(Long,OrderStatus)→Order`, `cancelOrder(Long)→Order`, `getOrdersPaged(int,int)→PageResponse`, `searchOrders(int,int,String,OrderStatus,LocalDate,LocalDate)→PageResponse` |
 | `service/ProductService.java` | `createProduct`, `getProducts`, `getProduct`, `updateProduct`, `deleteProduct` |
-| `service/AuthService.java` | `register(RegisterRequest)→AuthResponse`, `login(LoginRequest)→AuthResponse`, `findUsername(FindUsernameRequest)→String`, `resetPassword(ResetPasswordRequest)→void` |
 
 ### Repository
 | 파일 | 핵심 쿼리 |
 |------|----------|
 | `repository/OrderRepository.java` | `findAll(Pageable)→Page`, `searchByFilter(keyword,status,from,to,Pageable)→Page`, 커서용: `findByIdLessThanOrderByIdDesc`, `findOrdersByFilter/Before` |
 | `repository/ProductRepository.java` | `findAllByOrderByCreatedAtDesc()` |
-| `repository/UserRepository.java` | `findByUsername(String)→Optional<User>`, `existsByUsername(String)`, `findByEmail(String)→Optional<User>`, `findByUsernameAndEmail(String,String)→Optional<User>` |
 
 ### DTO
 - `OrderRequest`: productId(@NotNull Long), quantity(@NotNull @Min(1) int)
@@ -41,10 +75,6 @@
 - `CursorPage<T>`: content, nextCursor, hasNext. `of(List,int,Function)` 팩토리
 - `LoginRequest`: username(@NotBlank), password(@NotBlank @Size(min=4))
 - `RegisterRequest`: username(@NotBlank @Size(3-20)), password(@NotBlank @Size(4-100)), email(@NotBlank @Email)
-- `FindUsernameRequest`: email(@NotBlank @Email)
-- `ResetPasswordRequest`: username(@NotBlank), email(@NotBlank @Email), newPassword(@NotBlank @Size(4-100))
-- `AuthResponse`: token, username
-
 ### Event (Kafka 토픽)
 - `OrderCreatedEvent` → `order-events`: orderId, productName, quantity, status
 - `OrderStatusChangedEvent` → `order-status-events`: orderId, productName, previousStatus, newStatus
@@ -52,10 +82,8 @@
 
 ### Exception / Config
 - `GlobalExceptionHandler`: OrderNotFound(404), InvalidOrderStatus(400), ProductNotFound(404), InsufficientStock(409), IllegalArgument(400)
-- `KafkaProducerConfig`, `CorsConfig`(localhost:5173,3000, allowCredentials)
-- `SecurityConfig`: JWT 무상태 인증. `/api/auth/**` permitAll, 나머지 authenticated. BCryptPasswordEncoder
-- `JwtUtil`: 토큰 생성/검증. HS256, 24시간 만료
-- `JwtAuthenticationFilter`: Authorization Bearer 헤더에서 토큰 추출 → SecurityContext 설정
+- `KafkaProducerConfig`
+- `SecurityConfig`: JWT STATELESS. `/h2-console/**` permitAll, 나머지 authenticated
 
 ---
 
