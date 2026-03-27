@@ -65,6 +65,20 @@ function LoginPage() {
           </button>
         </form>
 
+        <div className="kakao-divider">
+          <span>또는</span>
+        </div>
+
+        <a
+          href={`${import.meta.env.VITE_ORDER_API_URL || ''}/oauth2/authorization/kakao`}
+          className="kakao-btn"
+        >
+          <svg className="kakao-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.632 1.568 4.942 3.938 6.322L5 20l3.938-2.053C10.2 18.3 11.086 18.5 12 18.5c5.523 0 10-3.477 10-7.5S17.523 3 12 3z" />
+          </svg>
+          카카오로 로그인
+        </a>
+
         <div className="auth-links">
           <button className="link-btn" onClick={() => setAuthPage('find-account')}>
             아이디 / 비밀번호 찾기

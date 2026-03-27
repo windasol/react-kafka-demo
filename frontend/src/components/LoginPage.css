@@ -98,6 +98,53 @@
   cursor: not-allowed;
 }
 
+.kakao-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 0;
+  color: #aaa;
+  font-size: 0.8rem;
+}
+
+.kakao-divider::before,
+.kakao-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #eee;
+}
+
+.kakao-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #FEE500;
+  color: #191919;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s;
+  margin-top: 12px;
+  box-sizing: border-box;
+}
+
+.kakao-btn:hover {
+  background: #F0D800;
+}
+
+.kakao-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .auth-links {
   display: flex;
   justify-content: center;

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { login as apiLogin, register as apiRegister } from '../api/authApi';
 import type { LoginRequest, RegisterRequest } from '../api/authApi';
 
@@ -20,6 +20,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [username, setUsername] = useState<string | null>(() => localStorage.getItem('username'));
   const [authPage, setAuthPage] = useState<AuthPage>('login');
   const isLoggedIn = username !== null;
+
+  // 카카오 OAuth2 콜백: URL 쿼리 파라미터에서 토큰 추출
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const kakaoToken = params.get('kakaoToken');
+    const kakaoUsername = params.get('kakaoUsername');
+    if (kakaoToken && kakaoUsername) {
+      localStorage.setItem('token', kakaoToken);
+      localStorage.setItem('username', kakaoUsername);
+      setUsername(kakaoUsername);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   const login = useCallback(async (request: LoginRequest) => {
     const response = await apiLogin(request);
