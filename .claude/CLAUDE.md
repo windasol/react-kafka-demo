@@ -1,39 +1,21 @@
 # react-kafka-demo
+React + Spring Boot + Kafka 주문/알림 데모
 
-React + Spring Boot + Apache Kafka 기반 주문/알림 데모 프로젝트
+## 구조
+`frontend/` | `backend/{auth-service·order-service·notification-service·jwt-common}/` | `backend/docker-compose.yml`
 
-## 프로젝트 구조
+## 원칙
+- 수정 전 `codebase-map.md`로 경로 파악 → 해당 파일만 Read → Edit
+- Write보다 Edit 우선. Bash 출력은 `| tail -n` 제한
 
-```
-react-kafka-demo/
-├── frontend/                     # React + Vite + TypeScript (포트 5173)
-├── backend/
-│   ├── auth-service/             # 인증 API (Spring Boot, 포트 8084)
-│   ├── order-service/            # 주문/상품 API (Spring Boot, 포트 8083)
-│   ├── notification-service/     # Kafka 소비 + SSE 알림 (Spring Boot, 포트 8082)
-│   └── jwt-common/               # JWT 공통 라이브러리
-└── backend/docker-compose.yml    # Kafka + Zookeeper
-```
+## 참조 문서 (필요할 때만 Read)
 
-## 코드 수정 원칙
-
-1. **코드 수정 전** `.claude/docs/codebase-map.md`로 파일 경로를 파악한다 (경로 인덱스만)
-2. API/메서드 상세가 필요하면 `.claude/docs/services/{서비스}.md`를 추가로 읽는다
-3. 수정 대상 파일을 특정한 뒤 **해당 파일만** Read → Edit 한다
-4. 파일 전체 재작성(`Write`)보다 **부분 수정(`Edit`)을 우선** 사용한다
-5. Bash 출력은 `| tail -n` 등으로 제한한다
-
-## 참조 문서
-
-필요할 때만 해당 문서를 읽어서 사용한다. (토큰 절약)
-
-| 상황 | 문서 경로 |
-|------|----------|
+| 상황 | 경로 |
+|------|------|
 | 파일 위치 파악 | `.claude/docs/codebase-map.md` |
 | 서비스 API/메서드 상세 | `.claude/docs/services/{auth\|order\|notification\|frontend\|jwt-common}.md` |
-| 빌드 / 실행 | `.claude/docs/build.md` |
+| 포트 / 빌드 | `.claude/docs/build.md` |
 
-## 경로별 규칙 (자동 로딩)
-
-- `.claude/rules/java.md` — `backend/**` 작업 시 자동 적용
-- `.claude/rules/react.md` — `frontend/**` 작업 시 자동 적용
+## 규칙 (자동 적용)
+- `backend/**` → `.claude/rules/java.md`
+- `frontend/**` → `.claude/rules/react.md`
