@@ -2,6 +2,7 @@ package com.example.notificationservice.controller;
 
 import com.example.notificationservice.dto.CursorPage;
 import com.example.notificationservice.entity.Notification;
+import com.example.notificationservice.entity.NotificationType;
 import com.example.notificationservice.service.NotificationService;
 import com.example.notificationservice.service.SseEmitterService;
 import org.springframework.http.MediaType;
@@ -38,9 +39,10 @@ public class NotificationController {
     @GetMapping(params = "paged")
     public ResponseEntity<CursorPage<Notification>> getNotificationsPaged(
             Authentication authentication,
+            @RequestParam(required = false) NotificationType type,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "7") int size) {
-        return ResponseEntity.ok(notificationService.getNotificationsPaged(authentication.getName(), cursor, size));
+        return ResponseEntity.ok(notificationService.getNotificationsPaged(authentication.getName(), type, cursor, size));
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

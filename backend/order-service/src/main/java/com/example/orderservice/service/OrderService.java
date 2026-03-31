@@ -215,4 +215,77 @@ public class OrderService {
         Page<Order> result = orderRepository.searchByFilter(kw, status, from, to, pageable);
         return PageResponse.of(result);
     }
+
+    /**
+     * 사용자별 주문 통계 요약 조회 (최근 7일 일별 통계 포함)
+     */
+    @Transactional(readOnly = true)
+    public OrderStatsSummary getStatsSummary(String username) {
+        long totalOrders = orderRepository.countByUsernameAndStatus(username, OrderStatus.CREATED)
+                + orderRepository.countByUsernameAndStatus(username, OrderStatus.CONFIRMED)
+                + orderRepository.countByUsernameAndStatus(username, OrderStatus.SHIPPED)
+                + orderRepository.countByUsernameAndStatus(username, OrderStatus.DELIVERED)
+                + orderRepository.countByUsernameAndStatus(username, OrderStatus.CANCELLED);
+
+        long pendingOrders = orderRepository.countByUsernameAndStatus(username, OrderStatus.CREATED)
+                + orderRepository.countByUsernameAndStatus(username, OrderStatus.CONFIRMED)
+                + orderRepository.countByUsernameAndStatus(username, OrderStatus.SHIPPED);
+
+        long completedOrders = orderRepository.countByUsernameAndStatus(username, OrderStatus.DELIVERED);
+        long cancelledOrders = orderRepository.countByUsernameAndStatus(username, OrderStatus.CANCELLED);
+
+        List<Order> deliveredOrders = orderRepository.findByUsernameOrderByCreatedAtDesc(username)
+                .stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED)
+                .toList();
+
+        double totalRevenue = deliveredOrders.stream()
+                .mapToDouble(o -> (double) o.getUnitPrice() * o.getQuantity())
+                .sum();
+
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        List<Object[]> rawDailyStats = orderRepository.findDailyStatsByUsername(username, sevenDaysAgo);
+
+        List<OrderStatsSummary.DailyStat> dailyStats = new ArrayList<>();
+        for (Object[] row : rawDailyStats) {
+            String date = row[0] != null ? row[0].toString() : "";
+            long count = row[1] != null ? ((Number) row[1]).longValue() : 0L;
+            double revenue = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
+            dailyStats.add(new OrderStatsSummary.DailyStat(date, count, revenue));
+        }
+
+        return new OrderStatsSummary(totalOrders, pendingOrders, completedOrders, cancelledOrders,
+                totalRevenue, dailyStats);
+    }
+
+    /**
+     * 사용자별 전체 주문 CSV 문자열 반환
+     * 헤더: 주문번호,상품명,수량,금액,상태,주문일시
+     */
+    @Transactional(readOnly = true)
+    public String exportOrdersCsv(String username) {
+        List<Order> orders = orderRepository.findByUsernameOrderByCreatedAtDesc(username);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("주문번호,상품명,수량,금액,상태,주문일시\n");
+        for (Order order : orders) {
+            sb.append(order.getId()).append(",")
+              .append(escapeCsvField(order.getProductName())).append(",")
+              .append(order.getQuantity()).append(",")
+              .append(order.getUnitPrice() != null ? (long) order.getUnitPrice() * order.getQuantity() : 0).append(",")
+              .append(order.getStatus().name()).append(",")
+              .append(order.getCreatedAt() != null ? order.getCreatedAt().format(formatter) : "")
+              .append("\n");
+        }
+        return sb.toString();
+    }
+
+    private String escapeCsvField(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
 }

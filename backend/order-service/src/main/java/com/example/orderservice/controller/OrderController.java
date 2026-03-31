@@ -1,17 +1,24 @@
 package com.example.orderservice.controller;
 
 import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.dto.OrderStatsSummary;
 import com.example.orderservice.dto.PageResponse;
 import com.example.orderservice.dto.OrderStatusRequest;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
 import com.example.orderservice.service.OrderService;
 import jakarta.validation.Valid;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -101,5 +108,36 @@ public class OrderController {
     public ResponseEntity<Order> cancelOrder(@PathVariable Long id) {
         Order cancelled = orderService.cancelOrder(id);
         return ResponseEntity.ok(cancelled);
+    }
+
+    /**
+     * 주문 통계 API
+     * 사용자별 주문 집계 및 최근 7일 일별 통계를 반환한다.
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<OrderStatsSummary> getOrderStats(Authentication authentication) {
+        OrderStatsSummary stats = orderService.getStatsSummary(authentication.getName());
+        return ResponseEntity.ok(stats);
+    }
+
+    /**
+     * 주문 CSV 내보내기 API
+     * 사용자의 전체 주문 목록을 CSV 파일로 반환한다.
+     */
+    @GetMapping("/export")
+    public ResponseEntity<Resource> exportOrders(Authentication authentication) {
+        String csv = orderService.exportOrdersCsv(authentication.getName());
+        byte[] csvBytes = csv.getBytes(StandardCharsets.UTF_8);
+        ByteArrayResource resource = new ByteArrayResource(csvBytes);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(
+                ContentDisposition.attachment().filename("orders.csv").build());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
+                .contentLength(csvBytes.length)
+                .body(resource);
     }
 }

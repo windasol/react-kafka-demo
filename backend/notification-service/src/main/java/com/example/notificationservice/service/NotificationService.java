@@ -103,7 +103,7 @@ public class NotificationService {
             String message = String.format("상품 '%s'의 재고가 %d개 남았습니다.",
                     event.getProductName(), event.getRemainingStock());
             Notification notification = Notification.create(
-                    "admin", null, NotificationType.LOW_STOCK, message);
+                    "admin", 0L, NotificationType.LOW_STOCK, message);
             Notification saved = notificationRepository.save(notification);
             sseEmitterService.sendToUser("admin", saved);
         } catch (Exception e) {
