@@ -3,11 +3,14 @@ package com.example.notificationservice.service;
 import com.example.notificationservice.dto.CursorPage;
 import com.example.notificationservice.entity.Notification;
 import com.example.notificationservice.entity.NotificationType;
+import com.example.notificationservice.event.LowStockEvent;
 import com.example.notificationservice.event.OrderCancelledEvent;
 import com.example.notificationservice.event.OrderCreatedEvent;
 import com.example.notificationservice.event.OrderStatusChangedEvent;
 import com.example.notificationservice.exception.NotificationNotFoundException;
 import com.example.notificationservice.repository.NotificationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -22,6 +25,8 @@ import java.util.Map;
  */
 @Service
 public class NotificationService {
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     private static final Map<String, String> STATUS_LABELS = Map.of(
             "CREATED", "생성",
@@ -88,6 +93,24 @@ public class NotificationService {
         sseEmitterService.sendToUser(event.getUsername(), saved);
     }
 
+    @KafkaListener(
+            topics = "low-stock-events",
+            groupId = "notification-service",
+            containerFactory = "lowStockKafkaListenerContainerFactory"
+    )
+    public void handleLowStockEvent(LowStockEvent event) {
+        try {
+            String message = String.format("상품 '%s'의 재고가 %d개 남았습니다.",
+                    event.getProductName(), event.getRemainingStock());
+            Notification notification = Notification.create(
+                    "admin", null, NotificationType.LOW_STOCK, message);
+            Notification saved = notificationRepository.save(notification);
+            sseEmitterService.sendToUser("admin", saved);
+        } catch (Exception e) {
+            log.error("low-stock-events 처리 실패 productId={}", event.getProductId(), e);
+        }
+    }
+
     public List<Notification> getAllNotifications(String username) {
         return notificationRepository.findByUsernameOrderByCreatedAtDesc(username);
     }
@@ -106,11 +129,16 @@ public class NotificationService {
         notificationRepository.saveAll(unread);
     }
 
-    public CursorPage<Notification> getNotificationsPaged(String username, Long cursor, int size) {
+    public CursorPage<Notification> getNotificationsPaged(String username, NotificationType type, Long cursor, int size) {
         Pageable pageable = PageRequest.of(0, size + 1);
-        List<Notification> notifications = (cursor == null)
-                ? notificationRepository.findByUsernameOrderByIdDesc(username, pageable)
-                : notificationRepository.findByUsernameAndIdLessThanOrderByIdDesc(username, cursor, pageable);
+        List<Notification> notifications;
+        if (type == null) {
+            notifications = (cursor == null)
+                    ? notificationRepository.findByUsernameOrderByIdDesc(username, pageable)
+                    : notificationRepository.findByUsernameAndIdLessThanOrderByIdDesc(username, cursor, pageable);
+        } else {
+            notifications = notificationRepository.findByUsernameAndTypeWithCursor(username, type, cursor, pageable);
+        }
         return CursorPage.of(notifications, size, Notification::getId);
     }
 

@@ -2,10 +2,12 @@ package com.example.orderservice.service;
 
 import com.example.orderservice.dto.CursorPage;
 import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.dto.OrderStatsSummary;
 import com.example.orderservice.dto.PageResponse;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
 import com.example.orderservice.entity.Product;
+import com.example.orderservice.event.LowStockEvent;
 import com.example.orderservice.event.OrderCancelledEvent;
 import com.example.orderservice.event.OrderCreatedEvent;
 import com.example.orderservice.event.OrderStatusChangedEvent;
@@ -14,6 +16,10 @@ import com.example.orderservice.exception.OrderNotFoundException;
 import com.example.orderservice.exception.ProductNotFoundException;
 import com.example.orderservice.repository.OrderRepository;
 import com.example.orderservice.repository.ProductRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,8 +28,11 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,9 +43,12 @@ import java.util.Objects;
 @Service
 public class OrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     private static final String ORDER_EVENTS_TOPIC = "order-events";
     private static final String ORDER_STATUS_TOPIC = "order-status-events";
     private static final String ORDER_CANCELLED_TOPIC = "order-cancelled-events";
+    private static final String LOW_STOCK_EVENTS_TOPIC = "low-stock-events";
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
@@ -53,11 +65,35 @@ public class OrderService {
     /**
      * 주문 생성 후 Kafka 이벤트 발행
      * 상품 재고를 차감한다. 재고 부족 시 InsufficientStockException 발생
+     * 트랜잭션 커밋 후 Kafka 이벤트를 발행한다. (트랜잭션 내 외부 I/O 금지 원칙)
      */
-    @Transactional
     public Order placeOrder(OrderRequest request, String username) {
         Objects.requireNonNull(request, "주문 요청 정보는 필수입니다.");
 
+        PlaceOrderResult result = placeOrderTransactional(request, username);
+
+        kafkaTemplate.send(ORDER_EVENTS_TOPIC, String.valueOf(result.order().getId()),
+                new OrderCreatedEvent(
+                        result.order().getId(),
+                        result.order().getUsername(),
+                        result.order().getProductName(),
+                        result.order().getQuantity(),
+                        result.order().getStatus().name()
+                ));
+
+        if (result.lowStockEvent() != null) {
+            kafkaTemplate.send(LOW_STOCK_EVENTS_TOPIC,
+                    String.valueOf(result.lowStockEvent().getProductId()),
+                    result.lowStockEvent());
+            log.info("재고 부족 이벤트 발행 productId={} remainingStock={}",
+                    result.lowStockEvent().getProductId(), result.lowStockEvent().getRemainingStock());
+        }
+
+        return result.order();
+    }
+
+    @Transactional
+    protected PlaceOrderResult placeOrderTransactional(OrderRequest request, String username) {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new ProductNotFoundException(request.productId()));
 
@@ -70,17 +106,15 @@ public class OrderService {
         Order order = Order.create(username, product.getId(), product.getName(), request.quantity(), product.getPrice());
         Order savedOrder = orderRepository.save(order);
 
-        OrderCreatedEvent event = new OrderCreatedEvent(
-                savedOrder.getId(),
-                savedOrder.getUsername(),
-                savedOrder.getProductName(),
-                savedOrder.getQuantity(),
-                savedOrder.getStatus().name()
-        );
-        kafkaTemplate.send(ORDER_EVENTS_TOPIC, String.valueOf(savedOrder.getId()), event);
+        LowStockEvent lowStockEvent = null;
+        if (LowStockEvent.isLowStock(product.getStock())) {
+            lowStockEvent = new LowStockEvent(product.getId(), product.getName(), product.getStock());
+        }
 
-        return savedOrder;
+        return new PlaceOrderResult(savedOrder, lowStockEvent);
     }
+
+    private record PlaceOrderResult(Order order, LowStockEvent lowStockEvent) {}
 
     /**
      * 주문 상태 변경 후 Kafka 이벤트 발행
