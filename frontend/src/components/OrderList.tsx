@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { fetchOrdersPaged, changeOrderStatus, cancelOrder, searchOrders } from '../api/orderApi';
+import { fetchOrdersPaged, changeOrderStatus, cancelOrder, searchOrders, exportOrders } from '../api/orderApi';
 import type { Order, OrderStatus } from '../types';
 import { NEXT_STATUS, STATUS_LABEL } from '../types';
 import OrderDetail from './OrderDetail';
@@ -27,6 +27,8 @@ export default function OrderList({ refreshTrigger, onStockChanged }: OrderListP
   const [loadingOrderId, setLoadingOrderId] = useState<number | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [filter, setFilter] = useState<FilterParams | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
 
   const loadPage = useCallback(async (page: number, filterParams: FilterParams | null) => {
@@ -106,9 +108,34 @@ export default function OrderList({ refreshTrigger, onStockChanged }: OrderListP
     setFilter(null);
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      await exportOrders();
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+        '내보내기 중 오류가 발생했습니다. 다시 시도해주세요.';
+      setExportError(message);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="order-list">
-      <h2>주문 목록</h2>
+      <div className="order-list-header">
+        <h2>주문 목록</h2>
+        <button
+          className="export-btn"
+          onClick={handleExport}
+          disabled={isExporting}
+        >
+          {isExporting ? '내보내는 중...' : 'CSV 내보내기'}
+        </button>
+      </div>
+      {exportError && <p className="export-error">{exportError}</p>}
       <OrderFilter onFilter={handleFilter} onReset={handleReset} />
       <div className="order-list-body">
       {orders.length === 0 && !isLoading ? (

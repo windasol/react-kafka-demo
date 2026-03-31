@@ -1,3 +1,18 @@
+export interface DailyStat {
+  date: string;
+  count: number;
+  revenue: number;
+}
+
+export interface OrderStatsSummary {
+  totalOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  totalRevenue: number;
+  dailyStats: DailyStat[];
+}
+
 /** 커서 기반 페이지 응답 */
 export interface CursorPage<T> {
   content: T[];
