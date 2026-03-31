@@ -30,12 +30,7 @@ paths:
 ### API 에러 처리
 - `try/catch` 없이 API 호출 금지 — 모든 비동기 호출은 에러 처리 필수
 - 에러 상태를 UI에 표시 (토스트 또는 인라인 에러 메시지)
-- 네트워크 오류와 비즈니스 오류 구분 처리
-  ```typescript
-  // 비즈니스 에러: 서버가 내려준 메시지 표시
-  // 네트워크 에러: "일시적 오류가 발생했습니다. 다시 시도해주세요." 표시
-  const message = error.response?.data?.message ?? '일시적 오류가 발생했습니다.';
-  ```
+- 네트워크 오류와 비즈니스 오류 구분: `error.response?.data?.message ?? '일시적 오류가 발생했습니다.'` 패턴
 
 ### 로딩 / UX 상태
 - API 호출 중 버튼 중복 클릭 방지 (`disabled={isLoading}`)
@@ -49,13 +44,7 @@ paths:
 - 사용자 입력값을 URL에 직접 삽입 금지 — `encodeURIComponent` 처리
 
 ### 메모리 누수 방지
-- SSE(`EventSource`), 타이머(`setInterval`/`setTimeout`), 이벤트 리스너는 반드시 **unmount 시 정리**
-  ```typescript
-  useEffect(() => {
-    const es = new EventSource(url, { withCredentials: true });
-    return () => es.close(); // 반드시 cleanup
-  }, []);
-  ```
+- SSE/타이머/리스너: useEffect cleanup에서 `es.close()` / `clearInterval()` / `removeEventListener()` 필수
 - `AbortController`로 컴포넌트 unmount 시 진행 중인 fetch 취소
 - useEffect dependency 누락으로 인한 stale closure 주의
 
@@ -77,38 +66,13 @@ paths:
 
 ## 렌더링 / 안정성 규칙
 
-### key prop — 반드시 고유 id 사용
-```typescript
-// bad — 배열 index는 재정렬/삽입 시 버그 유발
-{orders.map((order, index) => <OrderItem key={index} ... />)}
-
-// good — 도메인 고유 id 사용
-{orders.map(order => <OrderItem key={order.id} ... />)}
-```
+### key prop
+- 배열 index 금지, 도메인 고유 id 사용
 
 ### useEffect 의존성 배열 관리
-- 의존성 배열에서 값을 누락하면 stale closure 버그 발생
-- `eslint-plugin-react-hooks`의 `exhaustive-deps` 규칙 경고를 무시하지 않는다
-- 의존성으로 인한 무한 루프가 우려될 경우 → `useCallback`/`useMemo`로 참조 안정화
-  ```typescript
-  // bad — fetchOrders가 의존성에서 누락되면 최초 1회만 실행
-  useEffect(() => { fetchOrders(); }, []);
-
-  // good
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
-  const fetchOrders = useCallback(() => { ... }, [page]);
-  ```
+- `exhaustive-deps` 경고 무시 금지
+- 함수는 `useCallback`으로 참조 안정화 후 deps에 포함
 
 ### 타입 단언 (`as`) 사용 제한
-- `as` 단언은 TypeScript 타입 체크를 우회하므로 최소화
-- API 응답 타입은 `as` 대신 타입 정의를 보완하거나 타입 가드 사용
-  ```typescript
-  // bad
-  const user = response.data as User;
-
-  // good — 타입 정의 보완 또는 타입 가드
-  function isUser(data: unknown): data is User {
-    return typeof data === 'object' && data !== null && 'username' in data;
-  }
-  ```
-- 불가피하게 사용 시 `// eslint-disable` 주석 없이 이유를 주석으로 명시
+- `as` 최소화: 타입 가드 함수 또는 타입 정의 보완으로 대체
+- 불가피하게 사용 시 이유를 주석으로 명시

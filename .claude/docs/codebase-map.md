@@ -1,12 +1,12 @@
 # 코드베이스 맵
 
-| 서비스 | 포트   | 루트 패키지 | 상세 |
-|--------|------|------------|------|
-| auth-service | 8084 | `com.example.authservice` | `.claude/docs/services/auth.md` |
-| order-service | 8083 | `com.example.orderservice` | `.claude/docs/services/order.md` |
-| notification-service | 8082 | `com.example.notificationservice` | `.claude/docs/services/notification.md` |
-| frontend | 5173 | `frontend/src` | `.claude/docs/services/frontend.md` |
-| jwt-common | —    | `com.example.jwtcommon` | `.claude/docs/services/jwt-common.md` |
+| 서비스 | 루트 패키지 | 상세 |
+|--------|------------|------|
+| auth-service | `com.example.authservice` | `.claude/docs/services/auth.md` |
+| order-service | `com.example.orderservice` | `.claude/docs/services/order.md` |
+| notification-service | `com.example.notificationservice` | `.claude/docs/services/notification.md` |
+| frontend | `frontend/src` | `.claude/docs/services/frontend.md` |
+| jwt-common | `com.example.jwtcommon` | `.claude/docs/services/jwt-common.md` |
 
 ---
 
