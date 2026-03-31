@@ -137,6 +137,14 @@ ObjectUtils.isEmpty(obj)        // null·빈객체·빈배열 통합 체크
 - N+1 문제: 연관 엔티티 조회 시 `@EntityGraph` 또는 fetch join 사용
 - 대량 조회: 페이지네이션 없는 `findAll()` 금지 — 커서 또는 오프셋 페이징 필수
 - 인덱스: 자주 조회하는 컬럼(`username`, `orderId`, `createdAt`)에 `@Index` 추가
+- **`PageRequest` 생성 시 정렬 기준 명시** — 기본 정렬이 없으면 페이지마다 순서가 달라질 수 있음
+  ```java
+  // bad — 정렬 기준 없음
+  PageRequest.of(page, size)
+
+  // good
+  PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+  ```
 
 ### 장애 대응 (Kafka)
 - Kafka 발행 실패 시 재시도 또는 DLQ(Dead Letter Queue) 처리 고려
