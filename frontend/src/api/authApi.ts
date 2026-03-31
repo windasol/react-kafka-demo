@@ -1,4 +1,5 @@
 import axios from 'axios';
+import './axiosConfig';
 
 const API_BASE = import.meta.env.VITE_AUTH_API_URL || '';
 
@@ -45,4 +46,13 @@ export const findUsername = async (request: FindUsernameRequest): Promise<{ user
 export const resetPassword = async (request: ResetPasswordRequest): Promise<{ message: string }> => {
   const response = await axios.post<{ message: string }>(`${API_BASE}/api/auth/reset-password`, request);
   return response.data;
+};
+
+export const fetchProfile = async (): Promise<{ username: string; email: string }> => {
+  const res = await axios.get<{ username: string; email: string }>(`${API_BASE}/api/auth/profile`);
+  return res.data;
+};
+
+export const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+  await axios.patch(`${API_BASE}/api/auth/password`, { currentPassword, newPassword });
 };

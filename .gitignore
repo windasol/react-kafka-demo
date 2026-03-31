@@ -1,5 +1,6 @@
 # Claude (개인 설정 파일만 제외, 문서는 팀 공유)
 .claude/settings.local.json
+.claude/worktrees/
 
 # Java
 *.class

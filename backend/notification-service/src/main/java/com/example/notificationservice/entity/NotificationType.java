@@ -10,5 +10,6 @@ public enum NotificationType {
     ORDER_CONFIRMED,
     ORDER_SHIPPED,
     ORDER_DELIVERED,
-    ORDER_CANCELLED
+    ORDER_CANCELLED,
+    LOW_STOCK
 }

@@ -193,6 +193,68 @@
   font-size: 0.85rem;
 }
 
+/* ── Filter Tabs ── */
+
+.notification-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.filter-tab {
+  padding: 5px 14px;
+  background: #f8f9fb;
+  border: 1px solid #dfe1e6;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1.4;
+}
+
+.filter-tab:hover {
+  border-color: #9ca3af;
+  color: #1e1e2e;
+  background: #f0f1f4;
+}
+
+.filter-tab.active {
+  background: #1e1e2e;
+  border-color: #1e1e2e;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* ── LOW_STOCK notification variant ── */
+
+.notification-item.LOW_STOCK {
+  border-left: 3px solid #f59e0b;
+  background: #fffbf0;
+}
+
+.notification-item.LOW_STOCK.unread {
+  background: #fef8e7;
+  border-color: #fde68a;
+}
+
+.notification-item.LOW_STOCK.unread:hover {
+  background: #fef3c7;
+}
+
+/* ── New item fade-in ── */
+
+.notification-item--new {
+  animation: notifFadeIn 0.3s ease-in;
+}
+
+@keyframes notifFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
 .scroll-sentinel {
   height: 4px;
 }

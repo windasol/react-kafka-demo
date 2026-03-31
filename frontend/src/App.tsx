@@ -7,12 +7,18 @@ import ProductList from './components/ProductList';
 import OrderForm from './components/OrderForm';
 import OrderList from './components/OrderList';
 import NotificationList from './components/NotificationList';
+import ProfilePage from './components/ProfilePage';
+import Dashboard from './components/Dashboard';
 import './App.css';
+
+type MainTab = 'orders' | 'dashboard';
 
 function App() {
   const { isLoggedIn, username, logout, authPage } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [productTrigger, setProductTrigger] = useState(0);
+  const [showProfile, setShowProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState<MainTab>('orders');
 
   if (!isLoggedIn) {
     if (authPage === 'register') return <RegisterPage />;
@@ -39,19 +45,44 @@ function App() {
           </div>
           <div className="header-user">
             <span className="username">{username}</span>
+            <button className="profile-btn" onClick={() => setShowProfile(true)}>프로필</button>
             <button className="logout-btn" onClick={logout}>로그아웃</button>
           </div>
         </div>
+        <nav className="app-nav">
+          <button
+            className={`nav-btn${activeTab === 'orders' ? ' nav-btn-active' : ''}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            주문 관리
+          </button>
+          <button
+            className={`nav-btn${activeTab === 'dashboard' ? ' nav-btn-active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            대시보드
+          </button>
+        </nav>
       </header>
       <main className="container">
-        <section className="panel">
-          <ProductList onProductChanged={handleProductChanged} refreshTrigger={productTrigger} />
-          <OrderForm onOrderCreated={handleOrderCreated} refreshProductTrigger={productTrigger} />
-          <OrderList refreshTrigger={refreshTrigger} onStockChanged={handleProductChanged} />
-        </section>
-        <section className="panel">
-          <NotificationList />
-        </section>
+        {showProfile ? (
+          <ProfilePage onClose={() => setShowProfile(false)} />
+        ) : activeTab === 'dashboard' ? (
+          <section className="panel panel-full">
+            <Dashboard />
+          </section>
+        ) : (
+          <>
+            <section className="panel">
+              <ProductList onProductChanged={handleProductChanged} refreshTrigger={productTrigger} />
+              <OrderForm onOrderCreated={handleOrderCreated} refreshProductTrigger={productTrigger} />
+              <OrderList refreshTrigger={refreshTrigger} onStockChanged={handleProductChanged} />
+            </section>
+            <section className="panel">
+              <NotificationList />
+            </section>
+          </>
+        )}
       </main>
     </div>
   );

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Order, OrderStatus, PageResponse } from '../types';
+import type { Order, OrderStatus, PageResponse, OrderStatsSummary } from '../types';
 
 const API_BASE = import.meta.env.VITE_ORDER_API_URL || '';
 
@@ -32,6 +32,25 @@ export const changeOrderStatus = async (orderId: number, status: OrderStatus): P
 export const cancelOrder = async (orderId: number): Promise<Order> => {
   const response = await axios.patch<Order>(`${API_BASE}/api/orders/${orderId}/cancel`);
   return response.data;
+};
+
+export const fetchOrderStats = async (): Promise<OrderStatsSummary> => {
+  const res = await axios.get<OrderStatsSummary>(`${API_BASE}/api/orders/stats`);
+  return res.data;
+};
+
+export const exportOrders = async (): Promise<void> => {
+  const res = await axios.get(`${API_BASE}/api/orders/export`, {
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(new Blob([res.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'orders.csv');
+  document.body.appendChild(link);
+  link.click();
+  link.parentNode?.removeChild(link);
+  window.URL.revokeObjectURL(url);
 };
 
 export interface OrderSearchParams {

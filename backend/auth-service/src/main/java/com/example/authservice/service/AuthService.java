@@ -4,6 +4,7 @@ import com.example.authservice.dto.*;
 import com.example.authservice.entity.User;
 import com.example.authservice.repository.UserRepository;
 import com.example.jwtcommon.JwtUtil;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,5 +58,22 @@ public class AuthService {
         User user = userRepository.findByUsernameAndEmail(request.username(), request.email())
                 .orElseThrow(() -> new IllegalArgumentException("사용자명과 이메일이 일치하는 계정이 없습니다."));
         user.changePassword(passwordEncoder.encode(request.newPassword()));
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponse getProfile(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        return new UserProfileResponse(user.getUsername(), user.getEmail());
+    }
+
+    @Transactional
+    public void changePassword(String username, ChangePasswordRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
+        }
+        user.changePassword(passwordEncoder.encode(request.getNewPassword()));
     }
 }
