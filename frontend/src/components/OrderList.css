@@ -5,11 +5,47 @@
   border: 1px solid #ebedf0;
 }
 
+.order-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
 .order-list h2 {
-  margin: 0 0 14px 0;
+  margin: 0;
   font-size: 1rem;
   font-weight: 700;
   color: #1e1e2e;
+}
+
+.export-btn {
+  padding: 6px 14px;
+  background: #ffffff;
+  color: #6b7280;
+  border: 1px solid #dfe1e6;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.export-btn:hover:not(:disabled) {
+  border-color: #1e1e2e;
+  color: #1e1e2e;
+  background: #f0f0f3;
+}
+
+.export-btn:disabled {
+  color: #d0d3d9;
+  border-color: #ebedf0;
+  cursor: not-allowed;
 }
 
 .order-list-body {
