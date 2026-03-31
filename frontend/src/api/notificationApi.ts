@@ -8,9 +8,10 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
   return response.data;
 };
 
-export const fetchNotificationsPaged = async (cursor?: number, size = 7): Promise<CursorPage<Notification>> => {
+export const fetchNotificationsPaged = async (cursor?: number, size = 7, type?: string): Promise<CursorPage<Notification>> => {
   const params = new URLSearchParams({ paged: 'true', size: String(size) });
   if (cursor != null) params.set('cursor', String(cursor));
+  if (type != null) params.set('type', type);
   const response = await axios.get<CursorPage<Notification>>(`${API_BASE}/api/notifications?${params}`);
   return response.data;
 };

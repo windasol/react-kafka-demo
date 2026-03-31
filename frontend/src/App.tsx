@@ -7,12 +7,14 @@ import ProductList from './components/ProductList';
 import OrderForm from './components/OrderForm';
 import OrderList from './components/OrderList';
 import NotificationList from './components/NotificationList';
+import ProfilePage from './components/ProfilePage';
 import './App.css';
 
 function App() {
   const { isLoggedIn, username, logout, authPage } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [productTrigger, setProductTrigger] = useState(0);
+  const [showProfile, setShowProfile] = useState(false);
 
   if (!isLoggedIn) {
     if (authPage === 'register') return <RegisterPage />;
@@ -39,19 +41,26 @@ function App() {
           </div>
           <div className="header-user">
             <span className="username">{username}</span>
+            <button className="profile-btn" onClick={() => setShowProfile(true)}>프로필</button>
             <button className="logout-btn" onClick={logout}>로그아웃</button>
           </div>
         </div>
       </header>
       <main className="container">
-        <section className="panel">
-          <ProductList onProductChanged={handleProductChanged} refreshTrigger={productTrigger} />
-          <OrderForm onOrderCreated={handleOrderCreated} refreshProductTrigger={productTrigger} />
-          <OrderList refreshTrigger={refreshTrigger} onStockChanged={handleProductChanged} />
-        </section>
-        <section className="panel">
-          <NotificationList />
-        </section>
+        {showProfile ? (
+          <ProfilePage onClose={() => setShowProfile(false)} />
+        ) : (
+          <>
+            <section className="panel">
+              <ProductList onProductChanged={handleProductChanged} refreshTrigger={productTrigger} />
+              <OrderForm onOrderCreated={handleOrderCreated} refreshProductTrigger={productTrigger} />
+              <OrderList refreshTrigger={refreshTrigger} onStockChanged={handleProductChanged} />
+            </section>
+            <section className="panel">
+              <NotificationList />
+            </section>
+          </>
+        )}
       </main>
     </div>
   );

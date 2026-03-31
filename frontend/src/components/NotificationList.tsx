@@ -5,22 +5,31 @@ import { NOTIFICATION_ICON, NOTIFICATION_COLOR_CLASS } from '../types';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import './NotificationList.css';
 
+const FILTER_TABS: { label: string; value: string | null }[] = [
+  { label: '전체', value: null },
+  { label: 'ORDER_CREATED', value: 'ORDER_CREATED' },
+  { label: 'ORDER_STATUS_CHANGED', value: 'ORDER_STATUS_CHANGED' },
+  { label: 'ORDER_CANCELLED', value: 'ORDER_CANCELLED' },
+  { label: 'LOW_STOCK', value: 'LOW_STOCK' },
+];
+
 export default function NotificationList() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeType, setActiveType] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const requestIdRef = useRef(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>;
 
-  const loadPage = useCallback(async (nextCursor: number | null) => {
+  const loadPage = useCallback(async (nextCursor: number | null, type: string | null) => {
     if (loadingRef.current && nextCursor !== null) return;
     loadingRef.current = true;
     const currentRequestId = ++requestIdRef.current;
     setIsLoading(true);
     try {
-      const page = await fetchNotificationsPaged(nextCursor ?? undefined);
+      const page = await fetchNotificationsPaged(nextCursor ?? undefined, 7, type ?? undefined);
 
       if (currentRequestId !== requestIdRef.current) return;
 
@@ -38,7 +47,7 @@ export default function NotificationList() {
   }, []);
 
   useEffect(() => {
-    loadPage(null);
+    loadPage(null, activeType);
 
     const eventSource = new EventSource(getNotificationStreamUrl(), { withCredentials: true });
 
@@ -59,11 +68,18 @@ export default function NotificationList() {
     return () => {
       eventSource.close();
     };
-  }, [loadPage]);
+  }, [loadPage, activeType]);
+
+  const handleTabChange = useCallback((type: string | null) => {
+    setActiveType(type);
+    setNotifications([]);
+    setCursor(null);
+    setHasNext(false);
+  }, []);
 
   const handleLoadMore = useCallback(() => {
-    loadPage(cursor);
-  }, [cursor, loadPage]);
+    loadPage(cursor, activeType);
+  }, [cursor, activeType, loadPage]);
 
   const sentinelRef = useInfiniteScroll(handleLoadMore, hasNext, isLoading, scrollContainerRef);
 
@@ -133,6 +149,17 @@ export default function NotificationList() {
             </button>
           )}
         </div>
+      </div>
+      <div className="notification-filter-tabs">
+        {FILTER_TABS.map((tab) => (
+          <button
+            key={tab.value ?? 'all'}
+            className={`filter-tab${activeType === tab.value ? ' active' : ''}`}
+            onClick={() => handleTabChange(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
       <div className="notification-list-scroll" ref={scrollContainerRef}>
       {notifications.length === 0 && !isLoading ? (

@@ -39,7 +39,9 @@ export type NotificationType =
   | 'ORDER_CONFIRMED'
   | 'ORDER_SHIPPED'
   | 'ORDER_DELIVERED'
-  | 'ORDER_CANCELLED';
+  | 'ORDER_CANCELLED'
+  | 'ORDER_STATUS_CHANGED'
+  | 'LOW_STOCK';
 
 export interface Notification {
   id: number;
@@ -52,11 +54,13 @@ export interface Notification {
 
 /** 알림 타입별 아이콘 */
 export const NOTIFICATION_ICON: Record<NotificationType, string> = {
-  ORDER_CREATED: '\u{1F4E6}',    // 📦
-  ORDER_CONFIRMED: '\u{2705}',   // ✅
-  ORDER_SHIPPED: '\u{1F69A}',    // 🚚
-  ORDER_DELIVERED: '\u{1F389}',  // 🎉
-  ORDER_CANCELLED: '\u{274C}',   // ❌
+  ORDER_CREATED: '\u{1F4E6}',         // 📦
+  ORDER_CONFIRMED: '\u{2705}',        // ✅
+  ORDER_SHIPPED: '\u{1F69A}',         // 🚚
+  ORDER_DELIVERED: '\u{1F389}',       // 🎉
+  ORDER_CANCELLED: '\u{274C}',        // ❌
+  ORDER_STATUS_CHANGED: '\u{1F504}',  // 🔄
+  LOW_STOCK: '\u{26A0}',              // ⚠
 };
 
 /** 알림 타입별 CSS 클래스 */
@@ -66,6 +70,8 @@ export const NOTIFICATION_COLOR_CLASS: Record<NotificationType, string> = {
   ORDER_SHIPPED: 'noti-shipped',
   ORDER_DELIVERED: 'noti-delivered',
   ORDER_CANCELLED: 'noti-cancelled',
+  ORDER_STATUS_CHANGED: 'noti-status-changed',
+  LOW_STOCK: 'noti-low-stock',
 };
 
 /** 각 상태에서 전이 가능한 다음 상태 */
