@@ -1,9 +1,9 @@
 # 빌드 및 실행
 
 ## 서비스 포트
-| 서비스 | 포트 |
+| 서비스 | 포트   |
 |--------|------|
-| auth-service | 8080 |
+| auth-service | 8084 |
 | order-service | 8083 |
 | notification-service | 8082 |
 | frontend | 5173 |

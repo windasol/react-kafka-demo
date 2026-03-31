@@ -8,7 +8,7 @@ React + Spring Boot + Apache Kafka 기반 주문/알림 데모 프로젝트
 react-kafka-demo/
 ├── frontend/                     # React + Vite + TypeScript (포트 5173)
 ├── backend/
-│   ├── auth-service/             # 인증 API (Spring Boot, 포트 8080)
+│   ├── auth-service/             # 인증 API (Spring Boot, 포트 8084)
 │   ├── order-service/            # 주문/상품 API (Spring Boot, 포트 8083)
 │   ├── notification-service/     # Kafka 소비 + SSE 알림 (Spring Boot, 포트 8082)
 │   └── jwt-common/               # JWT 공통 라이브러리

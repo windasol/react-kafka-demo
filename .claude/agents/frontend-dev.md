@@ -35,7 +35,7 @@ frontend/src/
 ## 환경변수
 
 ```
-VITE_AUTH_API_URL=http://localhost:8080
+VITE_AUTH_API_URL=http://localhost:8084
 VITE_ORDER_API_URL=http://localhost:8083
 VITE_NOTIFICATION_API_URL=http://localhost:8082
 ```

@@ -1,6 +1,6 @@
 # auth-service 상세
 
-포트: 8080 | 패키지: `com.example.authservice`
+포트: 8084 | 패키지: `com.example.authservice`
 
 ## Entity
 - `User`: id, username(unique), password(BCrypt), email, provider, createdAt

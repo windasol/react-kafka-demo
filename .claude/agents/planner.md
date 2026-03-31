@@ -13,7 +13,7 @@ description: 기능 요청이나 버그 수정 요청을 받아 요구사항을 
 react-kafka-demo/
 ├── frontend/                     # React + Vite + TypeScript (포트 5173)
 ├── backend/
-│   ├── auth-service/             # 인증 API (Spring Boot, 포트 8080)
+│   ├── auth-service/             # 인증 API (Spring Boot, 포트 8084)
 │   ├── order-service/            # 주문/상품 API (Spring Boot, 포트 8083)
 │   ├── notification-service/     # Kafka 소비 + SSE 알림 (Spring Boot, 포트 8082)
 │   └── jwt-common/               # JWT 공통 라이브러리
