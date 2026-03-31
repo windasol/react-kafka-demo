@@ -60,6 +60,13 @@ ObjectUtils.isEmpty(obj)      // null·빈객체 통합 체크
 - **생성자 주입만** (`@Autowired` 필드 주입 금지)
 - `@Transactional(readOnly = true)` — 조회 전용에 반드시 적용
 - **트랜잭션 내 Kafka 발행 금지** — 커밋 후 발행
+- **self-invocation 금지** — 같은 클래스 내 `this.method()` 호출은 `@Transactional` 미적용 (Spring AOP 프록시 우회)
+  ```java
+  // bad — @Transactional 적용 안 됨
+  public void outer() { this.innerWithTransaction(); }
+
+  // good — 별도 Service 빈으로 분리
+  ```
 
 ### 예외 / 검증
 - 입력 검증: `@Valid` + DTO 어노테이션
@@ -77,7 +84,7 @@ ObjectUtils.isEmpty(obj)      // null·빈객체 통합 체크
 ```
 - SSE Emitter 컬렉션: `CopyOnWriteArrayList` 또는 `synchronized` 사용
 
-### Kafka 멱등성
+### Kafka 멱등성 / 예외 처리
 - at-least-once → 동일 이벤트 중복 수신 가능
 - orderId 등 고유 키 기준 **중복 체크 후 처리**
 - 컨슈머 예외는 반드시 catch → 로그 후 건너뜀 (서비스 중단 방지)
@@ -89,6 +96,13 @@ try {
     log.error("이벤트 처리 실패 orderId={}", event.getOrderId(), e);
 }
 ```
+
+- 반복 실패가 우려되는 이벤트는 **DLT(Dead Letter Topic)** 로 이동 고려:
+  ```java
+  // application.yml
+  spring.kafka.listener.ack-mode: manual
+  // 실패 시 DLT 전송 (Spring Kafka RetryableTopic 또는 수동 send)
+  ```
 
 ### 보안
 - **JWT는 HttpOnly 쿠키로만** — Authorization 헤더/쿼리파라미터/바디 노출 금지
@@ -107,6 +121,14 @@ if (!entity.getUsername().equals(username))
 ### 성능
 - N+1 방지: `@EntityGraph` 또는 fetch join
 - `findAll()` 금지 — 커서 또는 오프셋 페이징 필수
+- **`PageRequest` 생성 시 정렬 기준 명시** — 기본 정렬이 없으면 페이지마다 순서가 달라질 수 있음
+  ```java
+  // bad — 정렬 기준 없음
+  PageRequest.of(page, size)
+
+  // good
+  PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+  ```
 
 ### 로깅 (SLF4J만 사용)
 - `System.out.println` **절대 금지**

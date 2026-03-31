@@ -30,6 +30,17 @@ Controller → Service → Repository
 - Setter 금지 — 도메인 의도를 드러내는 메서드명 사용
 - 도메인 규칙(불변식)은 엔티티 내부에서 검증
 - Kafka 이벤트는 `event/` 패키지에 도메인 이벤트로 정의
+- **엔티티 `equals()`/`hashCode()` 주의**: JPA 엔티티에서 `@Id` 필드 기반으로만 구현하거나, Lombok `@EqualsAndHashCode` 사용 금지 (LazyLoading 필드 포함 시 N+1 유발)
+  ```java
+  // good — id 기반으로만 구현
+  @Override public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Order)) return false;
+      Order other = (Order) o;
+      return id != null && id.equals(other.getId());
+  }
+  @Override public int hashCode() { return getClass().hashCode(); }
+  ```
 
 ---
 
@@ -53,6 +64,15 @@ CollectionUtils.isEmpty(list)   // null·빈컬렉션 통합 체크
 ObjectUtils.isEmpty(obj)        // null·빈객체·빈배열 통합 체크
 ```
 - null 반환 금지 → `Optional<T>` 또는 빈 컬렉션 반환
+- **`Optional.get()` 직접 호출 금지** — 반드시 `.orElseThrow()` / `.orElse()` / `.ifPresent()` 사용
+  ```java
+  // bad
+  User user = userRepository.findById(id).get(); // NoSuchElementException 위험
+
+  // good
+  User user = userRepository.findById(id)
+      .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+  ```
 
 ---
 
@@ -60,6 +80,14 @@ ObjectUtils.isEmpty(obj)        // null·빈객체·빈배열 통합 체크
 - 생성자 주입만 사용 (`@Autowired` 필드 주입 금지)
 - `@Transactional` 범위 최소화 — 조회 전용은 `readOnly = true`
 - 트랜잭션 내 외부 I/O(HTTP, Kafka 발행) 금지 — 트랜잭션 커밋 후 이벤트 발행
+- **self-invocation 금지**: 같은 클래스 내 `this.method()` 호출은 Spring AOP 프록시를 우회하여 `@Transactional`이 적용되지 않음
+  ```java
+  // bad — this.로 호출하면 @Transactional 무시됨
+  public void outer() { this.innerTransactional(); }
+  @Transactional public void innerTransactional() { ... }
+
+  // good — 별도 Service 빈으로 분리하거나 ApplicationContext에서 self-proxy 획득
+  ```
 
 ---
 

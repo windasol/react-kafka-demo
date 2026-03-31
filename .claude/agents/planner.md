@@ -61,6 +61,20 @@ react-kafka-demo/
 (의존 관계, 브레이킹 체인지, 마이그레이션 필요 여부 등)
 ```
 
+## 크로스 서비스 영향도 체크리스트
+
+기능 변경 시 아래 항목을 반드시 검토한다:
+
+| 변경 유형 | 영향 범위 | 주의사항 |
+|----------|----------|---------|
+| Kafka 토픽명/이벤트 페이로드 변경 | order-service (프로듀서) + notification-service (컨슈머) + 프론트엔드 타입 | 동시 배포 필요, 롤링 배포 시 구버전 컨슈머 호환성 확인 |
+| SSE 응답 구조 변경 | notification-service (Controller) + frontend (EventSource 파싱 로직) | 양측 동시 수정 필요 |
+| jwt-common 라이브러리 변경 | auth-service, order-service, notification-service 전체 재빌드 필요 | 의존 서비스 모두 재시작 |
+| 인증 API 변경 (`/api/auth/**`) | frontend authApi.ts + axiosConfig 인터셉터 | 401/403 처리 로직 확인 |
+| 공통 에러 응답 구조 변경 | 프론트엔드 모든 에러 핸들링 코드 | `error.response?.data?.message` 패턴 영향 |
+
+명세 작성 시 위 체크리스트에 해당하는 변경이 있으면 **변경 범위** 섹션에 명시한다.
+
 ## 역할 경계 — 반드시 지킬 것
 
 - **코드를 직접 수정하지 않는다** — 읽기 전용으로만 탐색한다

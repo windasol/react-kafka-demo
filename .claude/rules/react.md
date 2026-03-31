@@ -72,3 +72,43 @@ paths:
 - 빈 배열/null 렌더링 전 guard 처리 — optional chaining `?.` 적극 활용
 - 숫자 포맷: 금액은 `toLocaleString()`, 날짜는 포맷 함수 통일
 - 환경변수 누락 시 명확한 에러 발생 (`import.meta.env.VITE_XXX ?? throw`)
+
+---
+
+## 렌더링 / 안정성 규칙
+
+### key prop — 반드시 고유 id 사용
+```typescript
+// bad — 배열 index는 재정렬/삽입 시 버그 유발
+{orders.map((order, index) => <OrderItem key={index} ... />)}
+
+// good — 도메인 고유 id 사용
+{orders.map(order => <OrderItem key={order.id} ... />)}
+```
+
+### useEffect 의존성 배열 관리
+- 의존성 배열에서 값을 누락하면 stale closure 버그 발생
+- `eslint-plugin-react-hooks`의 `exhaustive-deps` 규칙 경고를 무시하지 않는다
+- 의존성으로 인한 무한 루프가 우려될 경우 → `useCallback`/`useMemo`로 참조 안정화
+  ```typescript
+  // bad — fetchOrders가 의존성에서 누락되면 최초 1회만 실행
+  useEffect(() => { fetchOrders(); }, []);
+
+  // good
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  const fetchOrders = useCallback(() => { ... }, [page]);
+  ```
+
+### 타입 단언 (`as`) 사용 제한
+- `as` 단언은 TypeScript 타입 체크를 우회하므로 최소화
+- API 응답 타입은 `as` 대신 타입 정의를 보완하거나 타입 가드 사용
+  ```typescript
+  // bad
+  const user = response.data as User;
+
+  // good — 타입 정의 보완 또는 타입 가드
+  function isUser(data: unknown): data is User {
+    return typeof data === 'object' && data !== null && 'username' in data;
+  }
+  ```
+- 불가피하게 사용 시 `// eslint-disable` 주석 없이 이유를 주석으로 명시

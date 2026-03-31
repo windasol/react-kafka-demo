@@ -82,12 +82,43 @@ useEffect(() => {
 - 로딩 스피너 또는 스켈레톤 표시 — 빈 화면 방치 금지
 - SSE 연결은 앱 전체에서 단일 인스턴스 (Context 또는 전역 상태로 관리)
 
+### 환경변수 접근
+- 환경변수는 반드시 `import.meta.env.VITE_*` 형태로 접근 (`process.env` 사용 불가)
+- 누락된 환경변수는 런타임 오류보다 빌드 시점에 발견되도록 처리
+  ```typescript
+  const authUrl = import.meta.env.VITE_AUTH_API_URL;
+  if (!authUrl) throw new Error('VITE_AUTH_API_URL 환경변수가 설정되지 않았습니다.');
+  ```
+
 ### 상태 관리
 - 서버 데이터와 클라이언트 UI 상태 분리
 - 전역 상태는 꼭 필요한 것만 (인증 정보, 알림 카운트)
 - 빈 배열/null 렌더링 전 guard: optional chaining `?.` 적극 활용
 
-### 페이지네이션
+### 기존 훅/유틸 재사용 원칙
+
+새 훅/유틸 작성 전 반드시 아래 기존 구현을 확인하고 재사용한다:
+
+| 필요한 기능 | 재사용할 파일 |
+|------------|------------|
+| 무한 스크롤 | `src/hooks/useInfiniteScroll.ts` |
+| Axios 인스턴스 (인터셉터 포함) | `src/api/axiosConfig.ts` |
+| 인증 상태 접근 | `src/contexts/AuthContext.tsx` |
+| 공통 타입 | `src/types/index.ts` |
+
+### axiosConfig 인터셉터 활용
+- `axiosConfig.ts`의 Axios 인스턴스를 사용하면 401 자동 로그아웃이 적용됨
+- **직접 `axios.get()`이 아닌 `axiosInstance.get()` 사용**
+  ```typescript
+  // bad — 인터셉터 적용 안 됨
+  const res = await axios.get('/api/orders');
+
+  // good — axiosConfig의 인스턴스 사용
+  import { axiosInstance } from '../api/axiosConfig';
+  const res = await axiosInstance.get('/api/orders');
+  ```
+
+## 페이지네이션
 - 주문 목록: 오프셋 기반 + `Pagination` 컴포넌트 (7개 단위)
 - 알림 목록: 커서 기반 + `useInfiniteScroll` 훅
 
