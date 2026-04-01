@@ -84,8 +84,8 @@ public class OrderController {
      * 주문 상세 조회 API
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Order> getOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.getOrder(id));
+    public ResponseEntity<Order> getOrder(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(orderService.getOrder(id, authentication.getName()));
     }
 
     /**
@@ -95,8 +95,9 @@ public class OrderController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<Order> changeOrderStatus(
             @PathVariable Long id,
-            @Valid @RequestBody OrderStatusRequest request) {
-        Order updated = orderService.changeOrderStatus(id, request.status());
+            @Valid @RequestBody OrderStatusRequest request,
+            Authentication authentication) {
+        Order updated = orderService.changeOrderStatus(id, request.status(), authentication.getName());
         return ResponseEntity.ok(updated);
     }
 
@@ -105,8 +106,8 @@ public class OrderController {
      * CREATED, CONFIRMED 상태에서만 취소 가능. 재고가 복원된다.
      */
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<Order> cancelOrder(@PathVariable Long id) {
-        Order cancelled = orderService.cancelOrder(id);
+    public ResponseEntity<Order> cancelOrder(@PathVariable Long id, Authentication authentication) {
+        Order cancelled = orderService.cancelOrder(id, authentication.getName());
         return ResponseEntity.ok(cancelled);
     }
 

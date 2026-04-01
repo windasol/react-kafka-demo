@@ -11,6 +11,7 @@ import com.example.orderservice.event.LowStockEvent;
 import com.example.orderservice.event.OrderCancelledEvent;
 import com.example.orderservice.event.OrderCreatedEvent;
 import com.example.orderservice.event.OrderStatusChangedEvent;
+import com.example.orderservice.exception.ForbiddenException;
 import com.example.orderservice.exception.InsufficientStockException;
 import com.example.orderservice.exception.OrderNotFoundException;
 import com.example.orderservice.exception.ProductNotFoundException;
@@ -120,9 +121,13 @@ public class OrderService {
      * 주문 상태 변경 후 Kafka 이벤트 발행
      * 유효하지 않은 전이 시 InvalidOrderStatusException 발생
      */
-    public Order changeOrderStatus(Long orderId, OrderStatus targetStatus) {
+    public Order changeOrderStatus(Long orderId, OrderStatus targetStatus, String username) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (!order.getUsername().equals(username)) {
+            throw new ForbiddenException("해당 주문에 대한 접근 권한이 없습니다.");
+        }
 
         String previousStatus = order.getStatus().name();
 
@@ -148,9 +153,13 @@ public class OrderService {
      * CREATED, CONFIRMED 상태에서만 취소 가능
      */
     @Transactional
-    public Order cancelOrder(Long orderId) {
+    public Order cancelOrder(Long orderId, String username) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
+
+        if (!order.getUsername().equals(username)) {
+            throw new ForbiddenException("해당 주문에 대한 접근 권한이 없습니다.");
+        }
 
         // 도메인 메서드로 취소 (유효성 검증 포함)
         order.cancel();
@@ -179,10 +188,15 @@ public class OrderService {
 
     /**
      * 주문 단건 상세 조회
+     * username 소유권을 검증한다. 불일치 시 ForbiddenException 발생
      */
-    public Order getOrder(Long orderId) {
-        return orderRepository.findById(orderId)
+    public Order getOrder(Long orderId, String username) {
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
+        if (!order.getUsername().equals(username)) {
+            throw new ForbiddenException("해당 주문에 대한 접근 권한이 없습니다.");
+        }
+        return order;
     }
 
     /**

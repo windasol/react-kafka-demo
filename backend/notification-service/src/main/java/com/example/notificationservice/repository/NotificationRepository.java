@@ -25,6 +25,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     long countByUsernameAndIsReadFalse(String username);
 
+    boolean existsByOrderIdAndType(Long orderId, NotificationType type);
+
     @Query("SELECT n FROM Notification n WHERE n.username = :username " +
            "AND (:type IS NULL OR n.type = :type) " +
            "AND (:cursor IS NULL OR n.id < :cursor) " +

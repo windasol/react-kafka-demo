@@ -2,6 +2,7 @@ package com.example.orderservice.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -50,6 +51,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<Map<String, String>> handleInsufficientStock(InsufficientStockException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", e.getMessage()));
+    }
+
+    /**
+     * 낙관적 락 충돌 예외 처리 → 409 Conflict
+     * 동시 요청으로 인해 재고 차감에 실패한 경우
+     */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, String>> handleOptimisticLock(ObjectOptimisticLockingFailureException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "동시 요청으로 처리에 실패했습니다. 잠시 후 다시 시도해주세요."));
+    }
+
+    /**
+     * 권한 없음 예외 처리 → 403 Forbidden
+     */
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, String>> handleForbidden(ForbiddenException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", e.getMessage()));
     }
 

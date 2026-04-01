@@ -3,6 +3,7 @@ package com.example.orderservice.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * 상품 도메인 엔티티
@@ -16,6 +17,9 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Long version;
 
     @Column(nullable = false)
     private String name;

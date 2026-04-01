@@ -54,6 +54,10 @@ public class NotificationService {
 
     @KafkaListener(topics = "order-events", groupId = "notification-group")
     public void handleOrderCreatedEvent(OrderCreatedEvent event) {
+        if (notificationRepository.existsByOrderIdAndType(event.getOrderId(), NotificationType.ORDER_CREATED)) {
+            log.warn("중복 이벤트 무시: orderId={} type=ORDER_CREATED", event.getOrderId());
+            return;
+        }
         String message = String.format("새 주문이 생성되었습니다: %s (수량: %d)",
                 event.getProductName(), event.getQuantity());
         Notification notification = Notification.create(
@@ -68,9 +72,13 @@ public class NotificationService {
             containerFactory = "statusChangedKafkaListenerContainerFactory"
     )
     public void handleOrderStatusChangedEvent(OrderStatusChangedEvent event) {
+        NotificationType type = STATUS_TYPE_MAP.getOrDefault(event.getNewStatus(), NotificationType.ORDER_CONFIRMED);
+        if (notificationRepository.existsByOrderIdAndType(event.getOrderId(), type)) {
+            log.warn("중복 이벤트 무시: orderId={} type={}", event.getOrderId(), type);
+            return;
+        }
         String fromLabel = STATUS_LABELS.getOrDefault(event.getPreviousStatus(), event.getPreviousStatus());
         String toLabel = STATUS_LABELS.getOrDefault(event.getNewStatus(), event.getNewStatus());
-        NotificationType type = STATUS_TYPE_MAP.getOrDefault(event.getNewStatus(), NotificationType.ORDER_CONFIRMED);
         String message = String.format("주문 상태가 변경되었습니다: %s (%s → %s)",
                 event.getProductName(), fromLabel, toLabel);
         Notification notification = Notification.create(
@@ -85,6 +93,10 @@ public class NotificationService {
             containerFactory = "cancelledKafkaListenerContainerFactory"
     )
     public void handleOrderCancelledEvent(OrderCancelledEvent event) {
+        if (notificationRepository.existsByOrderIdAndType(event.getOrderId(), NotificationType.ORDER_CANCELLED)) {
+            log.warn("중복 이벤트 무시: orderId={} type=ORDER_CANCELLED", event.getOrderId());
+            return;
+        }
         String message = String.format("주문이 취소되었습니다: %s (수량: %d, 재고 복원됨)",
                 event.getProductName(), event.getQuantity());
         Notification notification = Notification.create(
