@@ -10,6 +10,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/user/react-kafka-demo/.claude/hooks/remind-docs-update.sh"
+          }
+        ]
+      }
     ]
   }
 }
