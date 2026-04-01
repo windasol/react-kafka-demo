@@ -116,9 +116,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        if (!order.getUsername().equals(username)) {
-            throw new ForbiddenException("해당 주문에 대한 접근 권한이 없습니다.");
-        }
+        validateOwnership(order, username);
 
         String previousStatus = order.getStatus().name();
 
@@ -147,9 +145,7 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        if (!order.getUsername().equals(username)) {
-            throw new ForbiddenException("해당 주문에 대한 접근 권한이 없습니다.");
-        }
+        validateOwnership(order, username);
 
         // 도메인 메서드로 취소 (유효성 검증 포함)
         order.cancel();
@@ -182,9 +178,7 @@ public class OrderService {
     public Order getOrder(Long orderId, String username) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
-        if (!order.getUsername().equals(username)) {
-            throw new ForbiddenException("해당 주문에 대한 접근 권한이 없습니다.");
-        }
+        validateOwnership(order, username);
         return order;
     }
 
@@ -282,6 +276,12 @@ public class OrderService {
               .append("\n");
         }
         return sb.toString();
+    }
+
+    private void validateOwnership(Order order, String username) {
+        if (!order.getUsername().equals(username)) {
+            throw new ForbiddenException("해당 주문에 대한 접근 권한이 없습니다.");
+        }
     }
 
     /**
