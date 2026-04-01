@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchProfile, changePassword } from '../api/authApi';
 import type { AxiosError } from 'axios';
+import './ProfilePage.css';
 
 interface ProfilePageProps {
   onClose: () => void;
