@@ -27,7 +27,7 @@
 ## 컴포넌트 (`components/`)
 | 파일 | Props | 역할 |
 |------|-------|------|
-| `App.tsx` | — | 루트. 미로그인→LoginPage, 로그인→메인 |
+| `App.tsx` | — | 루트. SSE 단일 인스턴스 관리, ToastNotification 렌더링 |
 | `LoginPage.tsx` | — | 로그인 폼, 회원가입/계정찾기 링크 |
 | `RegisterPage.tsx` | — | 회원가입 폼 |
 | `FindAccountPage.tsx` | — | 아이디 찾기 / 비밀번호 재설정 탭 |
@@ -37,7 +37,8 @@
 | `OrderDetail.tsx` | orderId, onClose, onStatusChanged | 주문 상세 모달 |
 | `Pagination.tsx` | currentPage, totalPages, onPageChange | 오프셋 페이지 버튼 (최대 5개) |
 | `ProductList.tsx` | onProductChanged, refreshTrigger | 상품 CRUD, 인라인 편집 |
-| `NotificationList.tsx` | — | 커서 무한스크롤, SSE 실시간, 읽음/삭제 |
+| `NotificationList.tsx` | latestNotification? | 커서 무한스크롤, 읽음/삭제. SSE는 App에서 주입 |
+| `ToastNotification.tsx` | toasts, onDismiss | 우하단 고정 토스트 팝업. 4초 자동 소멸 |
 
 ## 컨텍스트 / 훅
 - `AuthContext.tsx`: `useAuth()`. localStorage token/username. login/register/logout. authPage 상태

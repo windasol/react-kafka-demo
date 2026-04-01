@@ -3,14 +3,16 @@
 포트: 8083 | 패키지: `com.example.orderservice`
 
 ## Entity
-- `Order`: id, userId, productName, quantity, unitPrice, status(OrderStatus), createdAt
-  - `create(userId, productName, quantity, unitPrice)`
+- `Order`: id, username, productId, productName, quantity, unitPrice, status(OrderStatus), createdAt
+  - `create(username, productId, productName, quantity, unitPrice)`
   - `changeStatus(OrderStatus)`, `confirm()`, `ship()`, `deliver()`, `cancel()`
-- `Product`: id, name, price, stock, createdAt
+- `Product`: id, name, price, stock, version(낙관적 락), createdAt
   - `create(name, price, stock)`, `update(name, price, stock)`
   - `deductStock(quantity) → boolean`, `restoreStock(quantity)`
 - `OrderStatus`: enum CREATED→CONFIRMED→SHIPPED→DELIVERED, CREATED/CONFIRMED→CANCELLED
   - `canTransitionTo(OrderStatus) → boolean`, `isCancellable() → boolean`
+- `OutboxEvent`: id, topic, messageKey, payload(TEXT), eventType, createdAt
+  - `of(topic, messageKey, payload, eventType) → OutboxEvent` (정적 팩토리)
 
 ## Repository
 - `OrderRepository`
@@ -19,16 +21,21 @@
   - `findByIdLessThanOrderByIdDesc(...)` (커서)
 - `ProductRepository`
   - `findAllByOrderByCreatedAtDesc()`
+- `OutboxRepository`
+  - `findTop100ByOrderByCreatedAtAsc() → List<OutboxEvent>`
 
 ## Service
 - `OrderService`
-  - `placeOrder(OrderRequest) → Order`
-  - `changeOrderStatus(Long, OrderStatus) → Order`
-  - `cancelOrder(Long) → Order`
+  - `placeOrder(OrderRequest, username) → Order` — @Transactional 내부, Outbox 저장
+  - `changeOrderStatus(Long, OrderStatus, username) → Order` — @Transactional, 소유권 검증, Outbox 저장
+  - `cancelOrder(Long, username) → Order` — @Transactional, 소유권 검증, 재고 복원, Outbox 저장
+  - `getOrder(Long, username) → Order` — 소유권 검증
   - `getOrdersPaged(page, size) → PageResponse`
   - `searchOrders(page, size, keyword, status, from, to) → PageResponse`
 - `ProductService`
   - `createProduct`, `getProducts`, `getProduct`, `updateProduct`, `deleteProduct`
+- `OutboxRelayService`
+  - `relay()` — @Scheduled(fixedDelay=1000), Outbox → Kafka 발행 후 삭제
 
 ## Controller
 - `OrderController` — `/api/orders`
@@ -59,4 +66,5 @@
 ## Config / Exception
 - `SecurityConfig`: JWT STATELESS. `/h2-console/**` permitAll
 - `KafkaProducerConfig`: Kafka 프로듀서 설정
-- `GlobalExceptionHandler`: OrderNotFound→404, ProductNotFound→404, InsufficientStock→409, InvalidOrderStatus→400, IllegalArgument→400
+- `GlobalExceptionHandler`: OrderNotFound→404, ProductNotFound→404, InsufficientStock→409, InvalidOrderStatus→400, IllegalArgument→400, OptimisticLock→409, Forbidden→403
+- `ForbiddenException`: 주문 소유권 불일치 시 발생 → 403

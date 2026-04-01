@@ -28,15 +28,15 @@ exception/     GlobalExceptionHandler
 ## order-service
 `backend/order-service/src/main/java/com/example/orderservice/`
 ```
-entity/        Order · Product · OrderStatus
-repository/    OrderRepository · ProductRepository
-service/       OrderService · ProductService
+entity/        Order · Product · OrderStatus · OutboxEvent
+repository/    OrderRepository · ProductRepository · OutboxRepository
+service/       OrderService · ProductService · OutboxRelayService
 controller/    OrderController · ProductController
 config/        SecurityConfig · KafkaProducerConfig
 dto/           OrderRequest · ProductRequest · OrderStatusRequest · PageResponse · CursorPage
 event/         OrderCreatedEvent · OrderStatusChangedEvent · OrderCancelledEvent
 exception/     GlobalExceptionHandler · OrderNotFoundException · ProductNotFoundException
-               InvalidOrderStatusException · InsufficientStockException
+               InvalidOrderStatusException · InsufficientStockException · ForbiddenException
 ```
 `backend/order-service/src/main/resources/application.yml`
 
@@ -49,7 +49,7 @@ entity/        Notification · NotificationType
 repository/    NotificationRepository
 service/       NotificationService · SseEmitterService
 controller/    NotificationController
-config/        SecurityConfig
+config/        SecurityConfig · KafkaConsumerConfig
 dto/           CursorPage
 ```
 `backend/notification-service/src/main/resources/application.yml`
@@ -62,7 +62,7 @@ dto/           CursorPage
 api/           authApi · orderApi · productApi · notificationApi · axiosConfig
 components/    App · LoginPage · RegisterPage · FindAccountPage
                OrderList · OrderForm · OrderFilter · OrderDetail · Pagination
-               ProductList · NotificationList
+               ProductList · NotificationList · ToastNotification
 contexts/      AuthContext
 hooks/         useInfiniteScroll
 types/         index
