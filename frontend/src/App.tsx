@@ -80,14 +80,14 @@ function App() {
         </div>
         <nav className="app-nav">
           <button
-            className={`nav-btn${activeTab === 'orders' ? ' nav-btn-active' : ''}`}
-            onClick={() => setActiveTab('orders')}
+            className={`nav-btn${activeTab === 'orders' && !showProfile ? ' nav-btn-active' : ''}`}
+            onClick={() => { setShowProfile(false); setActiveTab('orders'); }}
           >
             주문 관리
           </button>
           <button
-            className={`nav-btn${activeTab === 'dashboard' ? ' nav-btn-active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
+            className={`nav-btn${activeTab === 'dashboard' && !showProfile ? ' nav-btn-active' : ''}`}
+            onClick={() => { setShowProfile(false); setActiveTab('dashboard'); }}
           >
             대시보드
           </button>

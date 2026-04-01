@@ -78,8 +78,8 @@ export default function ProfilePage({ onClose }: ProfilePageProps) {
   return (
     <div className="profile-page">
       <div className="profile-header">
-        <h2>사용자 프로필</h2>
-        <button className="close-btn" onClick={onClose}>닫기</button>
+        <h1>사용자 프로필</h1>
+        <button className="close-btn" onClick={onClose}>← 돌아가기</button>
       </div>
 
       {isProfileLoading && <p className="loading-message">프로필 불러오는 중...</p>}
@@ -87,19 +87,19 @@ export default function ProfilePage({ onClose }: ProfilePageProps) {
 
       {profile && (
         <div className="profile-info">
-          <div className="profile-field">
-            <label>아이디</label>
-            <span>{profile.username}</span>
+          <div className="field">
+            <span className="field-label">아이디</span>
+            <span className="field-value">{profile.username}</span>
           </div>
-          <div className="profile-field">
-            <label>이메일</label>
-            <span>{profile.email}</span>
+          <div className="field">
+            <span className="field-label">이메일</span>
+            <span className="field-value">{profile.email}</span>
           </div>
         </div>
       )}
 
-      <div className="password-change-section">
-        <h3>비밀번호 변경</h3>
+      <div className="change-password-form">
+        <h2>비밀번호 변경</h2>
         <form onSubmit={handleChangePassword}>
           <div className="form-group">
             <label htmlFor="currentPassword">현재 비밀번호</label>

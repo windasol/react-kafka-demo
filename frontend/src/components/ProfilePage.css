@@ -1,9 +1,8 @@
 .profile-page {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 20px;
+  padding: 32px 20px 48px;
   background: #f8f9fb;
 }
 
@@ -12,12 +11,45 @@
   max-width: 520px;
 }
 
-.profile-page h1 {
-  margin: 0 0 24px;
-  font-size: 1.3rem;
+/* ── Header ── */
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.profile-header h1 {
+  margin: 0;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #1e1e2e;
+}
+
+.close-btn {
+  padding: 7px 14px;
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #dfe1e6;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.close-btn:hover {
+  background: #f0f0f3;
+  border-color: #1e1e2e;
+  color: #1e1e2e;
+}
+
+.loading-message {
   text-align: center;
+  color: #9ca3af;
+  padding: 16px;
+  font-size: 0.82rem;
 }
 
 /* ── Profile Info Card ── */
