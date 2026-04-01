@@ -37,8 +37,6 @@ fi
 
 BASENAME=$(basename "$FILE_PATH")
 
-echo "[docs-sync] ${BASENAME} 수정됨 → 시그니처·필드·엔드포인트 변경이 있으면 커밋 전에 반드시 업데이트:"
-echo "  1. ${DOC}"
-echo "  2. .claude/docs/codebase-map.md"
+echo "[docs-sync] ${BASENAME} → ${DOC} + codebase-map.md 업데이트 필요 시 수정"
 
 exit 0
