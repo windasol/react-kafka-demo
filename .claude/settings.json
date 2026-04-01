@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/user/react-kafka-demo/.claude/hooks/check-codemap.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
