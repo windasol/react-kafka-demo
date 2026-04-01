@@ -33,7 +33,8 @@ repository/    OrderRepository · ProductRepository · OutboxRepository
 service/       OrderService · ProductService · OutboxRelayService
 controller/    OrderController · ProductController
 config/        SecurityConfig · KafkaProducerConfig
-security/      OrderSecurity
+security/      OrderSecurity (@Component("orderSecurity") · isOwner(orderId, username))
+dto/           OrderRequest · ProductRequest · OrderStatusRequest · PageResponse · CursorPage · OrderStatsSummary
 dto/           OrderRequest · ProductRequest · OrderStatusRequest · PageResponse · CursorPage
 event/         OrderCreatedEvent · OrderStatusChangedEvent · OrderCancelledEvent
 exception/     GlobalExceptionHandler · OrderNotFoundException · ProductNotFoundException

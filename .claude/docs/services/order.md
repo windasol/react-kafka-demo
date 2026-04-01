@@ -32,6 +32,8 @@
   - `getOrder(Long, username) → Order` — 소유권 검증
   - `getOrdersPaged(page, size) → PageResponse`
   - `searchOrders(page, size, keyword, status, from, to) → PageResponse`
+  - `getStatsSummary(username) → OrderStatsSummary`
+  - `exportOrdersCsv(username) → String`
 - `ProductService`
   - `createProduct`, `getProducts`, `getProduct`, `updateProduct`, `deleteProduct`
 - `OutboxRelayService`
@@ -45,6 +47,8 @@
   - GET `/{id}` → 상세
   - PATCH `/{id}/status` → 상태 변경
   - PATCH `/{id}/cancel` → 취소
+  - GET `/stats` → OrderStatsSummary
+  - GET `/export` → CSV 파일 다운로드
 - `ProductController` — `/api/products` CRUD
 
 ## DTO
@@ -59,9 +63,10 @@
 ## Kafka Events (발행)
 | 이벤트 | 토픽 | 필드 |
 |--------|------|------|
-| `OrderCreatedEvent` | order-events | orderId, productName, quantity, status |
-| `OrderStatusChangedEvent` | order-status-events | orderId, productName, previousStatus, newStatus |
-| `OrderCancelledEvent` | order-cancelled-events | orderId, productId, productName, quantity |
+| `OrderCreatedEvent` | order-events | orderId, username, productName, quantity, status |
+| `OrderStatusChangedEvent` | order-status-events | orderId, username, productName, previousStatus, newStatus |
+| `OrderCancelledEvent` | order-cancelled-events | orderId, username, productId, productName, quantity |
+| `LowStockEvent` | low-stock-events | productId, productName, remainingStock |
 
 ## Config / Exception
 - `SecurityConfig`: JWT STATELESS. `/h2-console/**` permitAll
