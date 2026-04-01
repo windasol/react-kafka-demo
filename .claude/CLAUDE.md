@@ -26,6 +26,7 @@ React + Spring Boot + Kafka 주문/알림 데모
 
 ## 기타 원칙
 - Write보다 Edit 우선. Bash 출력은 `| tail -n` 제한
+- 소스 파일 변경 후 반드시 관련 `.claude/docs/` 문서 업데이트 (커밋 전)
 
 ## 규칙 (자동 적용)
 - `backend/**` → `.claude/rules/java.md`
