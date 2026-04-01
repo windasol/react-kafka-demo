@@ -114,10 +114,16 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, OrderCancelledEvent> cancelledKafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, OrderCancelledEvent> cancelledKafkaListenerContainerFactory(
+            KafkaTemplate<String, Object> kafkaTemplate) {
         ConcurrentKafkaListenerContainerFactory<String, OrderCancelledEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(cancelledConsumerFactory());
+
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate);
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3));
+        factory.setCommonErrorHandler(errorHandler);
+
         return factory;
     }
 
