@@ -10,6 +10,8 @@ interface ProfilePageProps {
 interface ProfileData {
   username: string;
   email: string;
+  name: string | null;
+  provider: string | null;
 }
 
 export default function ProfilePage({ onClose }: ProfilePageProps) {
@@ -88,6 +90,12 @@ export default function ProfilePage({ onClose }: ProfilePageProps) {
 
       {profile && (
         <div className="profile-info">
+          {profile.name && (
+            <div className="field">
+              <span className="field-label">이름</span>
+              <span className="field-value">{profile.name}</span>
+            </div>
+          )}
           <div className="field">
             <span className="field-label">아이디</span>
             <span className="field-value">{profile.username}</span>
@@ -96,41 +104,49 @@ export default function ProfilePage({ onClose }: ProfilePageProps) {
             <span className="field-label">이메일</span>
             <span className="field-value">{profile.email}</span>
           </div>
+          {profile.provider && (
+            <div className="field">
+              <span className="field-label">로그인 방식</span>
+              <span className="field-value provider-badge">{profile.provider}</span>
+            </div>
+          )}
         </div>
       )}
 
-      <div className="change-password-form">
-        <h2>비밀번호 변경</h2>
-        <form onSubmit={handleChangePassword}>
-          <div className="form-group">
-            <label htmlFor="currentPassword">현재 비밀번호</label>
-            <input
-              id="currentPassword"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="newPassword">새 비밀번호</label>
-            <input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              disabled={isSubmitting}
-            />
-          </div>
-          {submitSuccess && <p className="success-message">{submitSuccess}</p>}
-          {submitError && <p className="error-message">{submitError}</p>}
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? '변경 중...' : '비밀번호 변경'}
-          </button>
-        </form>
-      </div>
+      {profile && !profile.provider && (
+        <div className="change-password-form">
+          <h2>비밀번호 변경</h2>
+          <form onSubmit={handleChangePassword}>
+            <div className="form-group">
+              <label htmlFor="currentPassword">현재 비밀번호</label>
+              <input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="newPassword">새 비밀번호</label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                disabled={isSubmitting}
+              />
+            </div>
+            {submitSuccess && <p className="success-message">{submitSuccess}</p>}
+            {submitError && <p className="error-message">{submitError}</p>}
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? '변경 중...' : '비밀번호 변경'}
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

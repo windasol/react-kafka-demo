@@ -43,8 +43,19 @@ public class KakaoOAuth2UserService extends DefaultOAuth2UserService {
 
         String username = "kakao_" + kakaoId;
 
+        @SuppressWarnings("unchecked")
+        Map<String, Object> profile = kakaoAccount != null
+                ? (Map<String, Object>) kakaoAccount.get("profile")
+                : null;
+        String name = (profile != null && profile.containsKey("nickname"))
+                ? (String) profile.get("nickname")
+                : username;
+
         userRepository.findByUsername(username)
-                .orElseGet(() -> userRepository.save(User.createOAuth(username, email, "KAKAO")));
+                .ifPresentOrElse(
+                        user -> user.updateName(name),
+                        () -> userRepository.save(User.createOAuth(username, email, "KAKAO", name))
+                );
 
         return oAuth2User;
     }

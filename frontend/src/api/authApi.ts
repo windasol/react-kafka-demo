@@ -48,8 +48,8 @@ export const resetPassword = async (request: ResetPasswordRequest): Promise<{ me
   return response.data;
 };
 
-export const fetchProfile = async (): Promise<{ username: string; email: string }> => {
-  const res = await axios.get<{ username: string; email: string }>(`${API_BASE}/api/auth/profile`);
+export const fetchProfile = async (): Promise<{ username: string; email: string; name: string | null; provider: string | null }> => {
+  const res = await axios.get<{ username: string; email: string; name: string | null; provider: string | null }>(`${API_BASE}/api/auth/profile`);
   return res.data;
 };
 

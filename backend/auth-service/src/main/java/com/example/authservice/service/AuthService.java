@@ -64,7 +64,7 @@ public class AuthService {
     public UserProfileResponse getProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
-        return new UserProfileResponse(user.getUsername(), user.getEmail());
+        return new UserProfileResponse(user.getUsername(), user.getEmail(), user.getName(), user.getProvider());
     }
 
     @Transactional

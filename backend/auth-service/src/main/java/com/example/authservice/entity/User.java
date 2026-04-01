@@ -28,6 +28,9 @@ public class User {
     @Column
     private String provider;
 
+    @Column
+    private String name;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -42,14 +45,19 @@ public class User {
         return user;
     }
 
-    public static User createOAuth(String username, String email, String provider) {
+    public static User createOAuth(String username, String email, String provider, String name) {
         User user = new User();
         user.username = username;
         user.password = "";
         user.email = email;
         user.provider = provider;
+        user.name = name;
         user.createdAt = LocalDateTime.now();
         return user;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
     }
 
     public void changePassword(String encodedPassword) {

@@ -101,6 +101,17 @@
   word-break: break-all;
 }
 
+.provider-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #FEE500;
+  color: #3A1D1D;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
 /* ── Change Password Form ── */
 
 .change-password-form {
