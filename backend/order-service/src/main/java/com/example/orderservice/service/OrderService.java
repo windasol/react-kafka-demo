@@ -284,6 +284,19 @@ public class OrderService {
         return sb.toString();
     }
 
+    /**
+     * Outbox 이벤트 직렬화 후 저장
+     * 트랜잭션 내부에서 호출되어 주문 저장과 원자성이 보장된다.
+     */
+    private void saveOutboxEvent(String topic, String messageKey, Object payload, String eventType) {
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            outboxRepository.save(OutboxEvent.of(topic, messageKey, json, eventType));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new RuntimeException("Outbox 이벤트 직렬화 실패: eventType=" + eventType, e);
+        }
+    }
+
     private String escapeCsvField(String value) {
         if (value == null) return "";
         if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
