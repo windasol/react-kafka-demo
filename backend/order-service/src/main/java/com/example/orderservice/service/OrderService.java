@@ -1,6 +1,5 @@
 package com.example.orderservice.service;
 
-import com.example.orderservice.annotation.ValidateOwnership;
 import com.example.orderservice.dto.OrderRequest;
 import com.example.orderservice.dto.OrderStatsSummary;
 import com.example.orderservice.dto.PageResponse;
@@ -111,7 +110,6 @@ public class OrderService {
      * 주문 상태 변경 후 Outbox에 이벤트 저장
      * 유효하지 않은 전이 시 InvalidOrderStatusException 발생
      */
-    @ValidateOwnership
     @Transactional
     public Order changeOrderStatus(Long orderId, OrderStatus targetStatus, String username) {
         Order order = orderRepository.findById(orderId)
@@ -139,7 +137,6 @@ public class OrderService {
      * 주문 취소 후 재고 복원 및 Outbox에 이벤트 저장 (보상 트랜잭션)
      * CREATED, CONFIRMED 상태에서만 취소 가능
      */
-    @ValidateOwnership
     @Transactional
     public Order cancelOrder(Long orderId, String username) {
         Order order = orderRepository.findById(orderId)
@@ -173,7 +170,6 @@ public class OrderService {
      * 주문 단건 상세 조회
      * username 소유권을 검증한다. 불일치 시 ForbiddenException 발생
      */
-    @ValidateOwnership
     public Order getOrder(Long orderId, String username) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));

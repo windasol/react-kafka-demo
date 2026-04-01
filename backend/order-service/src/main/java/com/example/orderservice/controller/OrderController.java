@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -83,6 +84,7 @@ public class OrderController {
     /**
      * 주문 상세 조회 API
      */
+    @PreAuthorize("@orderSecurity.isOwner(#id, authentication.name)")
     @GetMapping("/{id}")
     public ResponseEntity<Order> getOrder(@PathVariable Long id, Authentication authentication) {
         return ResponseEntity.ok(orderService.getOrder(id, authentication.getName()));
@@ -92,6 +94,7 @@ public class OrderController {
      * 주문 상태 변경 API
      * CREATED → CONFIRMED → SHIPPED → DELIVERED 순서로만 전이 가능
      */
+    @PreAuthorize("@orderSecurity.isOwner(#id, authentication.name)")
     @PatchMapping("/{id}/status")
     public ResponseEntity<Order> changeOrderStatus(
             @PathVariable Long id,
@@ -105,6 +108,7 @@ public class OrderController {
      * 주문 취소 API
      * CREATED, CONFIRMED 상태에서만 취소 가능. 재고가 복원된다.
      */
+    @PreAuthorize("@orderSecurity.isOwner(#id, authentication.name)")
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<Order> cancelOrder(@PathVariable Long id, Authentication authentication) {
         Order cancelled = orderService.cancelOrder(id, authentication.getName());
