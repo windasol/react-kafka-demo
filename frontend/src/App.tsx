@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
@@ -9,6 +9,9 @@ import OrderList from './components/OrderList';
 import NotificationList from './components/NotificationList';
 import ProfilePage from './components/ProfilePage';
 import Dashboard from './components/Dashboard';
+import ToastNotification from './components/ToastNotification';
+import { getNotificationStreamUrl } from './api/notificationApi';
+import type { Notification } from './types';
 import './App.css';
 
 type MainTab = 'orders' | 'dashboard';
@@ -19,6 +22,32 @@ function App() {
   const [productTrigger, setProductTrigger] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<MainTab>('orders');
+  const [latestNotification, setLatestNotification] = useState<Notification | null>(null);
+  const [toasts, setToasts] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const es = new EventSource(getNotificationStreamUrl(), { withCredentials: true });
+
+    es.addEventListener('notification', (event) => {
+      const newNotification: Notification = JSON.parse(event.data);
+      setLatestNotification(newNotification);
+      setToasts((prev) => [...prev, newNotification]);
+    });
+
+    es.onerror = () => {
+      es.close();
+    };
+
+    return () => {
+      es.close();
+    };
+  }, [isLoggedIn]);
+
+  const handleDismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   if (!isLoggedIn) {
     if (authPage === 'register') return <RegisterPage />;
@@ -79,11 +108,12 @@ function App() {
               <OrderList refreshTrigger={refreshTrigger} onStockChanged={handleProductChanged} />
             </section>
             <section className="panel">
-              <NotificationList />
+              <NotificationList latestNotification={latestNotification} />
             </section>
           </>
         )}
       </main>
+      <ToastNotification toasts={toasts} onDismiss={handleDismissToast} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef, type RefObject } from 'react';
-import { fetchNotificationsPaged, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications, getNotificationStreamUrl } from '../api/notificationApi';
+import { fetchNotificationsPaged, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications } from '../api/notificationApi';
 import type { Notification, NotificationType } from '../types';
 import { NOTIFICATION_ICON, NOTIFICATION_COLOR_CLASS } from '../types';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -13,7 +13,11 @@ const FILTER_TABS: { label: string; value: string | null }[] = [
   { label: 'LOW_STOCK', value: 'LOW_STOCK' },
 ];
 
-export default function NotificationList() {
+interface NotificationListProps {
+  latestNotification?: Notification | null;
+}
+
+export default function NotificationList({ latestNotification }: NotificationListProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [cursor, setCursor] = useState<number | null>(null);
   const [hasNext, setHasNext] = useState(false);
@@ -48,27 +52,15 @@ export default function NotificationList() {
 
   useEffect(() => {
     loadPage(null, activeType);
-
-    const eventSource = new EventSource(getNotificationStreamUrl(), { withCredentials: true });
-
-    // SSE로 들어오는 새 알림은 목록 상단에 추가 (커서/hasNext와 독립)
-    eventSource.addEventListener('notification', (event) => {
-      const newNotification: Notification = JSON.parse(event.data);
-      setNotifications((prev) => {
-        // 중복 방지
-        if (prev.some((n) => n.id === newNotification.id)) return prev;
-        return [newNotification, ...prev];
-      });
-    });
-
-    eventSource.onerror = () => {
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
   }, [loadPage, activeType]);
+
+  useEffect(() => {
+    if (!latestNotification) return;
+    setNotifications((prev) => {
+      if (prev.some((n) => n.id === latestNotification.id)) return prev;
+      return [latestNotification, ...prev];
+    });
+  }, [latestNotification]);
 
   const handleTabChange = useCallback((type: string | null) => {
     setActiveType(type);

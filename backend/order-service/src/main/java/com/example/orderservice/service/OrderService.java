@@ -1,11 +1,11 @@
 package com.example.orderservice.service;
 
-import com.example.orderservice.dto.CursorPage;
 import com.example.orderservice.dto.OrderRequest;
 import com.example.orderservice.dto.OrderStatsSummary;
 import com.example.orderservice.dto.PageResponse;
 import com.example.orderservice.entity.Order;
 import com.example.orderservice.entity.OrderStatus;
+import com.example.orderservice.entity.OutboxEvent;
 import com.example.orderservice.entity.Product;
 import com.example.orderservice.event.LowStockEvent;
 import com.example.orderservice.event.OrderCancelledEvent;
@@ -16,20 +16,18 @@ import com.example.orderservice.exception.InsufficientStockException;
 import com.example.orderservice.exception.OrderNotFoundException;
 import com.example.orderservice.exception.ProductNotFoundException;
 import com.example.orderservice.repository.OrderRepository;
+import com.example.orderservice.repository.OutboxRepository;
 import com.example.orderservice.repository.ProductRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -53,48 +51,30 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OutboxRepository outboxRepository;
+    private final ObjectMapper objectMapper;
 
     public OrderService(OrderRepository orderRepository,
                         ProductRepository productRepository,
-                        KafkaTemplate<String, Object> kafkaTemplate) {
+                        OutboxRepository outboxRepository,
+                        ObjectMapper objectMapper) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
-        this.kafkaTemplate = kafkaTemplate;
+        this.outboxRepository = outboxRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
-     * 주문 생성 후 Kafka 이벤트 발행
+     * 주문 생성 후 Outbox에 이벤트 저장 (트랜잭션 원자성 보장)
      * 상품 재고를 차감한다. 재고 부족 시 InsufficientStockException 발생
-     * 트랜잭션 커밋 후 Kafka 이벤트를 발행한다. (트랜잭션 내 외부 I/O 금지 원칙)
      */
     public Order placeOrder(OrderRequest request, String username) {
         Objects.requireNonNull(request, "주문 요청 정보는 필수입니다.");
-
-        PlaceOrderResult result = placeOrderTransactional(request, username);
-
-        kafkaTemplate.send(ORDER_EVENTS_TOPIC, String.valueOf(result.order().getId()),
-                new OrderCreatedEvent(
-                        result.order().getId(),
-                        result.order().getUsername(),
-                        result.order().getProductName(),
-                        result.order().getQuantity(),
-                        result.order().getStatus().name()
-                ));
-
-        if (result.lowStockEvent() != null) {
-            kafkaTemplate.send(LOW_STOCK_EVENTS_TOPIC,
-                    String.valueOf(result.lowStockEvent().getProductId()),
-                    result.lowStockEvent());
-            log.info("재고 부족 이벤트 발행 productId={} remainingStock={}",
-                    result.lowStockEvent().getProductId(), result.lowStockEvent().getRemainingStock());
-        }
-
-        return result.order();
+        return placeOrderTransactional(request, username);
     }
 
     @Transactional
-    protected PlaceOrderResult placeOrderTransactional(OrderRequest request, String username) {
+    protected Order placeOrderTransactional(OrderRequest request, String username) {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new ProductNotFoundException(request.productId()));
 
@@ -107,20 +87,31 @@ public class OrderService {
         Order order = Order.create(username, product.getId(), product.getName(), request.quantity(), product.getPrice());
         Order savedOrder = orderRepository.save(order);
 
-        LowStockEvent lowStockEvent = null;
+        saveOutboxEvent(ORDER_EVENTS_TOPIC, String.valueOf(savedOrder.getId()),
+                new OrderCreatedEvent(
+                        savedOrder.getId(),
+                        savedOrder.getUsername(),
+                        savedOrder.getProductName(),
+                        savedOrder.getQuantity(),
+                        savedOrder.getStatus().name()
+                ), "OrderCreatedEvent");
+
         if (LowStockEvent.isLowStock(product.getStock())) {
-            lowStockEvent = new LowStockEvent(product.getId(), product.getName(), product.getStock());
+            LowStockEvent lowStockEvent = new LowStockEvent(product.getId(), product.getName(), product.getStock());
+            saveOutboxEvent(LOW_STOCK_EVENTS_TOPIC, String.valueOf(product.getId()),
+                    lowStockEvent, "LowStockEvent");
+            log.info("재고 부족 이벤트 Outbox 저장 productId={} remainingStock={}",
+                    product.getId(), product.getStock());
         }
 
-        return new PlaceOrderResult(savedOrder, lowStockEvent);
+        return savedOrder;
     }
 
-    private record PlaceOrderResult(Order order, LowStockEvent lowStockEvent) {}
-
     /**
-     * 주문 상태 변경 후 Kafka 이벤트 발행
+     * 주문 상태 변경 후 Outbox에 이벤트 저장
      * 유효하지 않은 전이 시 InvalidOrderStatusException 발생
      */
+    @Transactional
     public Order changeOrderStatus(Long orderId, OrderStatus targetStatus, String username) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
@@ -135,21 +126,20 @@ public class OrderService {
         order.changeStatus(targetStatus);
         Order savedOrder = orderRepository.save(order);
 
-        // 주문 상태 변경 이벤트 발행
-        OrderStatusChangedEvent event = new OrderStatusChangedEvent(
-                savedOrder.getId(),
-                savedOrder.getUsername(),
-                savedOrder.getProductName(),
-                previousStatus,
-                savedOrder.getStatus().name()
-        );
-        kafkaTemplate.send(ORDER_STATUS_TOPIC, String.valueOf(savedOrder.getId()), event);
+        saveOutboxEvent(ORDER_STATUS_TOPIC, String.valueOf(savedOrder.getId()),
+                new OrderStatusChangedEvent(
+                        savedOrder.getId(),
+                        savedOrder.getUsername(),
+                        savedOrder.getProductName(),
+                        previousStatus,
+                        savedOrder.getStatus().name()
+                ), "OrderStatusChangedEvent");
 
         return savedOrder;
     }
 
     /**
-     * 주문 취소 후 재고 복원 및 Kafka 이벤트 발행 (보상 트랜잭션)
+     * 주문 취소 후 재고 복원 및 Outbox에 이벤트 저장 (보상 트랜잭션)
      * CREATED, CONFIRMED 상태에서만 취소 가능
      */
     @Transactional
@@ -173,15 +163,14 @@ public class OrderService {
             });
         }
 
-        // 주문 취소 이벤트 발행
-        OrderCancelledEvent event = new OrderCancelledEvent(
-                savedOrder.getId(),
-                savedOrder.getUsername(),
-                savedOrder.getProductId(),
-                savedOrder.getProductName(),
-                savedOrder.getQuantity()
-        );
-        kafkaTemplate.send(ORDER_CANCELLED_TOPIC, String.valueOf(savedOrder.getId()), event);
+        saveOutboxEvent(ORDER_CANCELLED_TOPIC, String.valueOf(savedOrder.getId()),
+                new OrderCancelledEvent(
+                        savedOrder.getId(),
+                        savedOrder.getUsername(),
+                        savedOrder.getProductId(),
+                        savedOrder.getProductName(),
+                        savedOrder.getQuantity()
+                ), "OrderCancelledEvent");
 
         return savedOrder;
     }
