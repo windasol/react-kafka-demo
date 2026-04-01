@@ -32,7 +32,7 @@
   - `getOrder(Long, username) → Order` — 소유권 검증
   - `getOrdersPaged(page, size) → PageResponse`
   - `searchOrders(page, size, keyword, status, from, to) → PageResponse`
-  - `getStatsSummary(username) → OrderStatsSummary`
+  - `getStatsSummary(username) → OrderStatsSummary` — totalRevenue·dailyStats.revenue 모두 CANCELLED 제외
   - `exportOrdersCsv(username) → String`
 - `ProductService`
   - `createProduct`, `getProducts`, `getProduct`, `updateProduct`, `deleteProduct`

@@ -87,12 +87,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     long countByUsernameAndStatus(@Param("username") String username, @Param("status") OrderStatus status);
 
     /**
-     * 사용자별 일별 주문 통계 조회 (최근 N일)
+     * 사용자별 일별 주문 통계 조회 (최근 N일, 취소 주문 제외)
      */
     @Query("SELECT FUNCTION('DATE', o.createdAt) as date, COUNT(o) as count, SUM(o.unitPrice * o.quantity) as revenue " +
            "FROM Order o WHERE o.username = :username AND o.createdAt >= :from " +
+           "AND o.status <> :cancelled " +
            "GROUP BY FUNCTION('DATE', o.createdAt) ORDER BY FUNCTION('DATE', o.createdAt)")
-    List<Object[]> findDailyStatsByUsername(@Param("username") String username, @Param("from") java.time.LocalDateTime from);
+    List<Object[]> findDailyStatsByUsername(@Param("username") String username, @Param("from") java.time.LocalDateTime from, @Param("cancelled") OrderStatus cancelled);
 
     /**
      * 사용자별 전체 주문 목록 최신 순 조회 (CSV 내보내기용)

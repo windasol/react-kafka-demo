@@ -225,17 +225,14 @@ public class OrderService {
         long completedOrders = orderRepository.countByUsernameAndStatus(username, OrderStatus.DELIVERED);
         long cancelledOrders = orderRepository.countByUsernameAndStatus(username, OrderStatus.CANCELLED);
 
-        List<Order> deliveredOrders = orderRepository.findByUsernameOrderByCreatedAtDesc(username)
+        double totalRevenue = orderRepository.findByUsernameOrderByCreatedAtDesc(username)
                 .stream()
-                .filter(o -> o.getStatus() == OrderStatus.DELIVERED)
-                .toList();
-
-        double totalRevenue = deliveredOrders.stream()
+                .filter(o -> o.getStatus() != OrderStatus.CANCELLED)
                 .mapToDouble(o -> (double) o.getUnitPrice() * o.getQuantity())
                 .sum();
 
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-        List<Object[]> rawDailyStats = orderRepository.findDailyStatsByUsername(username, sevenDaysAgo);
+        List<Object[]> rawDailyStats = orderRepository.findDailyStatsByUsername(username, sevenDaysAgo, OrderStatus.CANCELLED);
 
         List<OrderStatsSummary.DailyStat> dailyStats = new ArrayList<>();
         for (Object[] row : rawDailyStats) {
