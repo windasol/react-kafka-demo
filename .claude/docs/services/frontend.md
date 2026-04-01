@@ -39,6 +39,7 @@
 | `ProductList.tsx` | onProductChanged, refreshTrigger | 상품 CRUD, 인라인 편집 |
 | `NotificationList.tsx` | latestNotification? | 커서 무한스크롤, 읽음/삭제. SSE는 App에서 주입 |
 | `ToastNotification.tsx` | toasts, onDismiss | 우하단 고정 토스트 팝업. 4초 자동 소멸 |
+| `Dashboard.tsx` | — | 주문 통계 대시보드. 요약 카드, 총매출액 배너, 상태분포 파이차트, 일별 주문수 바차트, 일별 매출 에어리어차트(recharts), 일별 통계 테이블 |
 
 ## 컨텍스트 / 훅
 - `AuthContext.tsx`: `useAuth()`. localStorage token/username. login/register/logout. authPage 상태
