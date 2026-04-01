@@ -37,6 +37,8 @@ dto/           OrderRequest · ProductRequest · OrderStatusRequest · PageRespo
 event/         OrderCreatedEvent · OrderStatusChangedEvent · OrderCancelledEvent
 exception/     GlobalExceptionHandler · OrderNotFoundException · ProductNotFoundException
                InvalidOrderStatusException · InsufficientStockException · ForbiddenException
+annotation/    ValidateOwnership
+aspect/        OwnershipAspect
 ```
 `backend/order-service/src/main/resources/application.yml`
 
